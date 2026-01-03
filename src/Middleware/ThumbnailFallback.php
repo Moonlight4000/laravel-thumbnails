@@ -100,8 +100,23 @@ class ThumbnailFallback
                         'requested' => $path
                     ]);
                     
-                    // Generate thumbnail (returns URL)
+                    // Generate thumbnail (returns URL or data URI for blocked)
                     $thumbnailUrl = $this->thumbnailService->thumbnail($originalPath, $size, true);
+                    
+                    // Check if it's a data URI (blocked image)
+                    if (str_starts_with($thumbnailUrl, 'data:image/')) {
+                        // Extract base64 data
+                        $parts = explode(',', $thumbnailUrl, 2);
+                        if (count($parts) === 2) {
+                            $file = base64_decode($parts[1]);
+                            
+                            return response($file)
+                                ->header('Content-Type', 'image/png')
+                                ->header('Cache-Control', 'public, max-age=86400')
+                                ->header('X-Thumbnail-Blocked', 'license-required')
+                                ->header('X-Thumbnail-Size', $size);
+                        }
+                    }
                     
                     // Extract path from URL
                     $thumbnailPath = str_replace([asset('storage/'), '/storage/'], '', $thumbnailUrl);

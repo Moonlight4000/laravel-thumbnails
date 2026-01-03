@@ -202,7 +202,12 @@ class ThumbnailService
         }
 
         if (!static::$licenseValid) {
-            // Silent fail - return null
+            // Return blocked image placeholder
+            $blockedImagePath = __DIR__ . '/../resources/images/blocked.png';
+            if (file_exists($blockedImagePath)) {
+                return 'data:image/png;base64,' . base64_encode(file_get_contents($blockedImagePath));
+            }
+            // Fallback: return null
             return null;
         }
 
