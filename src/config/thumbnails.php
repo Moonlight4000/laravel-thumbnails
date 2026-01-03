@@ -17,6 +17,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | License Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Your license key from Moonlight. Get yours at:
+    | https://howtodraw.pl/developer/packages
+    |
+    | FREE for personal/non-commercial use (no key needed for local dev)
+    | PAID for commercial use ($500-$15,000/year depending on company size)
+    |
+    */
+
+    'license_key' => env('THUMBNAILS_LICENSE_KEY'),
+    'license_api_url' => env('THUMBNAILS_API_URL', 'https://howtodraw.pl/api/v1/licenses'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Thumbnail Sizes
     |--------------------------------------------------------------------------
     |

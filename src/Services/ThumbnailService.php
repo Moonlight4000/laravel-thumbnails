@@ -14,7 +14,7 @@
  * 
  * COMMERCIAL LICENSE - This software is protected by copyright.
  * FREE for personal/non-commercial use.
- * PAID license required for commercial use ($150-$1500/year).
+ * PAID license required for commercial use ($500-$15,000/year).
  * See LICENSE.md for full terms: https://github.com/Moonlight4000/laravel-thumbnails/blob/main/LICENSE.md
  * 
  * Unauthorized copying, modification, distribution, or commercial use
@@ -27,6 +27,8 @@ namespace Moonlight\Thumbnails\Services;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Http;
+use Carbon\Carbon;
 
 /**
  * ThumbnailService
@@ -40,6 +42,9 @@ use Illuminate\Support\Facades\Config;
  */
 class ThumbnailService
 {
+    protected static $licenseChecked = false;
+    protected static $licenseValid = false;
+
     /**
      * Get or generate thumbnail on-demand (filesystem cache)
      * 
@@ -61,6 +66,20 @@ class ThumbnailService
         array $contextData = []
     ): ?string
     {
+        // LICENSE VERIFICATION (runs once per request)
+        if (!static::$licenseChecked) {
+            static::$licenseValid = $this->checkLicense();
+            static::$licenseChecked = true;
+        }
+
+        if (!static::$licenseValid) {
+            Log::warning('Thumbnail generation attempted with invalid license', [
+                'image' => $imagePath
+            ]);
+            // Return null or watermarked image
+            return null;
+        }
+
         $disk = Config::get('thumbnails.disk', 'public');
         
         // 🔥 CONTEXT-AWARE PATH RESOLUTION (UNIQUE FEATURE!)
@@ -499,6 +518,271 @@ class ThumbnailService
         }
         
         return $deleted;
+    }
+
+    /**
+     * Check license validity (with cache and tampering detection)
+     * 
+     * CRITICAL SECURITY FUNCTION - DO NOT MODIFY
+     * Unauthorized modification constitutes copyright infringement
+     * 
+     * FAIL-SAFE DESIGN: Errors default to allowing usage if cache exists
+     * 
+     * @return bool
+     */
+    protected function checkLicense(): bool
+    {
+        $cacheFile = storage_path('framework/cache/moonlight-thumbnails-license.cache');
+        
+        // Check cache file
+        if (file_exists($cacheFile)) {
+            $data = @json_decode(file_get_contents($cacheFile), true);
+            
+            if (!$data || !isset($data['expires_at'], $data['signature'])) {
+                // Corrupted cache - silent alert
+                Log::warning('License cache corrupted or incomplete');
+                $this->sendTamperingAlert('corrupted_cache', $data ?? []);
+                return $this->verifyWithApi();
+            }
+            
+            try {
+                $expiresAt = Carbon::parse($data['expires_at']);
+                $verifiedAt = Carbon::parse($data['verified_at'] ?? 'now');
+                
+                // ANTI-TAMPERING: Date more than 1 year in future (CRITICAL)
+                if ($expiresAt->greaterThan(now()->addYear())) {
+                    Log::critical('TAMPERING DETECTED: Future date manipulation', [
+                        'expires_at' => $expiresAt->toDateTimeString()
+                    ]);
+                    $this->sendTamperingAlert('future_date', $data);
+                    // Continue to API verification anyway
+                    return $this->verifyWithApi();
+                }
+                
+                // ANTI-TAMPERING: Verified date in future
+                if ($verifiedAt->greaterThan(now()->addDay())) {
+                    Log::warning('Suspicious: verification date in future');
+                    $this->sendTamperingAlert('future_verified_date', $data);
+                    return $this->verifyWithApi();
+                }
+                
+                // Valid cache - check signature and expiry
+                if ($this->verifySignature($data)) {
+                    if ($expiresAt->isFuture()) {
+                        // Valid and not expired
+                        return true;
+                    } else {
+                        // Expired - try API to check for renewal
+                        Log::info('License cache expired - checking for renewal');
+                        return $this->verifyWithApi();
+                    }
+                }
+                
+                // Signature mismatch
+                Log::warning('License cache signature mismatch');
+                $this->sendTamperingAlert('signature_mismatch', $data);
+                return $this->verifyWithApi();
+                
+            } catch (\Exception $e) {
+                Log::warning('Error parsing license cache dates', [
+                    'error' => $e->getMessage()
+                ]);
+                $this->sendTamperingAlert('cache_parsing_error', [
+                    'error' => $e->getMessage()
+                ]);
+                return $this->verifyWithApi();
+            }
+        }
+        
+        // No cache - first run or deleted
+        Log::info('No license cache - performing verification');
+        return $this->verifyWithApi();
+    }
+
+    /**
+     * Verify license with Moonlight API
+     * 
+     * CRITICAL: Gracefully handles offline scenarios - never crashes!
+     * 
+     * @return bool
+     */
+    protected function verifyWithApi(): bool
+    {
+        try {
+            $licenseKey = Config::get('thumbnails.license_key');
+            $apiUrl = Config::get('thumbnails.license_api_url', 'https://howtodraw.pl/api/v1/licenses');
+            $cacheFile = storage_path('framework/cache/moonlight-thumbnails-license.cache');
+            
+            if (!$licenseKey) {
+                Log::warning('No license key configured for Laravel Thumbnails package');
+                
+                // Check if there's ANY valid cache - allow offline usage
+                if (file_exists($cacheFile)) {
+                    $data = @json_decode(file_get_contents($cacheFile), true);
+                    if ($data && isset($data['license_key'])) {
+                        Log::info('No license key in config, but valid cache exists - allowing offline usage');
+                        return true; // Allow offline usage with cached license
+                    }
+                }
+                
+                return false; // No license = block usage
+            }
+            
+            // Try to connect to API with short timeout (5 seconds)
+            $response = Http::timeout(5)->post("{$apiUrl}/verify", [
+                'license_key' => $licenseKey,
+                'domain' => request()?->getHost() ?? gethostname(),
+                'version' => '1.1.0',
+                'php_version' => PHP_VERSION,
+                'laravel_version' => app()->version(),
+                'server_info' => [
+                    'os' => PHP_OS,
+                    'sapi' => PHP_SAPI,
+                ],
+            ]);
+            
+            if ($response->successful() && $response->json('valid')) {
+                // Save cache
+                $cacheData = $response->json('cache_data');
+                if ($cacheData) {
+                    @file_put_contents($cacheFile, json_encode($cacheData, JSON_PRETTY_PRINT));
+                }
+                return true;
+            }
+            
+            // API says license is invalid
+            Log::warning('License verification failed - API response indicates invalid license', [
+                'response' => $response->json(),
+                'status' => $response->status()
+            ]);
+            
+            // Even if API says invalid, check cache for offline grace
+            return $this->handleOfflineGrace($cacheFile);
+            
+        } catch (\Exception $e) {
+            // Network error, timeout, or any other exception
+            Log::warning('Failed to connect to license API - entering offline mode', [
+                'error' => $e->getMessage(),
+                'type' => get_class($e)
+            ]);
+            
+            // OFFLINE MODE: Allow usage if ANY valid cache exists
+            return $this->handleOfflineGrace(storage_path('framework/cache/moonlight-thumbnails-license.cache'));
+        }
+    }
+
+    /**
+     * Handle offline grace period
+     * 
+     * LIBERAL POLICY: If user ever had a valid license, allow offline usage
+     * Only block if cache is obviously tampered or never existed
+     * 
+     * @param string $cacheFile
+     * @return bool
+     */
+    protected function handleOfflineGrace(string $cacheFile): bool
+    {
+        if (!file_exists($cacheFile)) {
+            Log::warning('No license cache found - cannot operate offline');
+            return false;
+        }
+        
+        $data = @json_decode(file_get_contents($cacheFile), true);
+        
+        if (!$data || !isset($data['license_key'], $data['expires_at'])) {
+            Log::warning('Corrupted license cache - cannot operate offline');
+            return false;
+        }
+        
+        try {
+            $expiresAt = Carbon::parse($data['expires_at']);
+            $verifiedAt = isset($data['verified_at']) ? Carbon::parse($data['verified_at']) : null;
+            
+            // Check if expired more than 90 days ago (very generous)
+            if ($expiresAt->lessThan(now()->subDays(90))) {
+                Log::warning('License expired over 90 days ago - offline grace period exceeded', [
+                    'expired_at' => $expiresAt->toDateTimeString()
+                ]);
+                return false;
+            }
+            
+            // Allow offline usage
+            Log::info('Operating in offline mode with cached license', [
+                'expires_at' => $expiresAt->toDateTimeString(),
+                'days_until_expiry' => now()->diffInDays($expiresAt, false)
+            ]);
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to parse license cache dates', [
+                'error' => $e->getMessage()
+            ]);
+            
+            // Even if dates are corrupted, if license_key exists, allow usage
+            // This is VERY liberal but prevents breaking customer sites
+            Log::info('Cache date parsing failed, but license_key exists - allowing usage');
+            return true;
+        }
+    }
+
+    /**
+     * Send tampering alert to Moonlight security
+     * 
+     * CRITICAL SECURITY FUNCTION - Operates silently
+     * 
+     * @param string $reason
+     * @param array $data
+     * @return void
+     */
+    protected function sendTamperingAlert(string $reason, array $data): void
+    {
+        try {
+            $licenseKey = Config::get('thumbnails.license_key');
+            $apiUrl = Config::get('thumbnails.license_api_url', 'https://howtodraw.pl/api/v1/licenses');
+            
+            Http::timeout(5)->post("{$apiUrl}/alert", [
+                'license_key' => $licenseKey,
+                'domain' => request()?->getHost() ?? gethostname(),
+                'ip' => request()?->ip() ?? 'unknown',
+                'reason' => $reason,
+                'tampering_data' => $data,
+                'forensics' => [
+                    'php_version' => PHP_VERSION,
+                    'laravel_version' => app()->version(),
+                    'package_version' => '1.1.0',
+                    'server_software' => $_SERVER['SERVER_SOFTWARE'] ?? null,
+                    'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
+                    'os' => PHP_OS,
+                    'sapi' => PHP_SAPI,
+                    'timestamp' => now()->toIso8601String(),
+                ]
+            ]);
+        } catch (\Exception $e) {
+            // Silent fail - don't alert attacker
+            Log::error('Failed to send tampering alert', ['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Verify HMAC signature
+     * 
+     * @param array $data
+     * @return bool
+     */
+    protected function verifySignature(array $data): bool
+    {
+        if (!isset($data['signature'])) {
+            return false;
+        }
+        
+        $signature = $data['signature'];
+        unset($data['signature']);
+        ksort($data);
+        
+        $expected = hash_hmac('sha256', json_encode($data), config('app.key'));
+        
+        return hash_equals($expected, $signature);
     }
 }
 

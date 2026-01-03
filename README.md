@@ -73,7 +73,7 @@ storage/
 **This is a COMMERCIAL package with a dual-licensing model:**
 
 - 🆓 **FREE** for personal/non-commercial use
-- 💼 **PAID** for commercial use ($150-$1,500/year)
+- 💼 **PAID** for commercial use ($500-$15,000/year)
 
 See [LICENSE.md](LICENSE.md) for details.
 
@@ -540,9 +540,9 @@ storage/app/public/photos/
 | License | Price | Best For | Limits |
 |---------|-------|----------|--------|
 | **Personal** | **FREE** | Hobby projects, open-source | Non-commercial only |
-| **Small Business** | **$150/year** | Startups, freelancers | 1-10 devs, <$1M revenue |
-| **Medium Business** | **$500/year** | Growing companies | 11-50 devs, $1M-$10M revenue |
-| **Enterprise** | **$1,500/year** | Large corporations | 50+ devs, unlimited |
+| **Small Business** | **$500/year** | Startups, freelancers | 1-10 devs, <$1M revenue |
+| **Medium Business** | **$1,500/year** | Growing companies | 11-50 devs, $1M-$10M revenue |
+| **Enterprise** | **$15,000/year** | Large corporations | 50+ devs, unlimited |
 
 **Full details:** [LICENSE.md](LICENSE.md)
 
