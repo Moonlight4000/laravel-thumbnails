@@ -395,7 +395,9 @@ class ThumbnailService
         };
         
         // Clean up (suppress deprecation warning in PHP 8.1+)
+        /** @phpstan-ignore-next-line */
         @imagedestroy($sourceImage);
+        /** @phpstan-ignore-next-line */
         @imagedestroy($thumbnail);
     }
     
@@ -498,6 +500,7 @@ class ThumbnailService
         );
         
         imagecopy($thumbnail, $tempThumb, (int)$offsetX, (int)$offsetY, 0, 0, (int)$destWidth, (int)$destHeight);
+        /** @phpstan-ignore-next-line */
         @imagedestroy($tempThumb);
         
         // Return dummy values since we already did the copy
@@ -519,6 +522,9 @@ class ThumbnailService
     
     /**
      * Generate using Intervention Image (if available)
+     * 
+     * @phpstan-ignore-next-line
+     * @psalm-suppress UndefinedClass
      */
     protected function generateWithIntervention(string $sourcePath, string $thumbnailPath, int $width, int $height): void
     {
@@ -531,6 +537,7 @@ class ThumbnailService
             $disk = Config::get('thumbnails.disk', 'public');
             $quality = Config::get('thumbnails.quality', 85);
             
+            /** @phpstan-ignore-next-line */
             $image = \Intervention\Image\Facades\Image::make($sourcePath);
             $image->fit($width, $height, function ($constraint) {
                 $constraint->upsize();
@@ -548,6 +555,9 @@ class ThumbnailService
     
     /**
      * Generate using Imagick (if available)
+     * 
+     * @phpstan-ignore-next-line
+     * @psalm-suppress UndefinedClass
      */
     protected function generateWithImagick(string $sourcePath, string $thumbnailPath, int $width, int $height): void
     {
@@ -560,6 +570,7 @@ class ThumbnailService
             $disk = Config::get('thumbnails.disk', 'public');
             $quality = Config::get('thumbnails.quality', 85);
             
+            /** @phpstan-ignore-next-line */
             $imagick = new \Imagick($sourcePath);
             $imagick->thumbnailImage($width, $height, true, true);
             $imagick->setImageCompressionQuality($quality);
