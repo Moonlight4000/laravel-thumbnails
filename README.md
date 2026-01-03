@@ -14,6 +14,14 @@ Generate image thumbnails on-the-fly in Laravel with **Context-Aware Thumbnails�
 
 **No pre-generation needed. No Redis required. Smart organization included.™**
 
+### 🌟 What Makes Us Unique?
+
+1. **🎯 Context-Aware Organization™** - Thumbnails organized by user/post/album (no other package does this!)
+2. **⚛️ React/Vue/JavaScript Support** - The ONLY Laravel thumbnail package with `sync-js` command for frontend frameworks
+3. **🤖 Smart Crop with AI Energy Detection** - Automatically focuses on important image areas
+4. **🚀 AVIF/WebP Support** - Modern formats for 50%+ smaller file sizes
+5. **🔒 Commercial Licensing** - Professional support & tamper detection included
+
 ---
 
 ## 🏆 Why Choose This Over Other Packages?
@@ -55,7 +63,9 @@ Generate image thumbnails on-the-fly in Laravel with **Context-Aware Thumbnails�
 | Blade directive | ✅ `@thumbnail()` | ❌ | ❌ | ❌ |
 | Helper function | ✅ `thumbnail()` | ❌ | ✅ | ❌ |
 | Eloquent trait | ✅ `HasThumbnails` | ❌ | ✅ | ✅ |
-| Artisan commands | ✅ generate, clear | ✅ purge, optimize | ❌ | ✅ Many |
+| **React/Vue/JS** | ✅ **ONLY US!** | ❌ | ❌ | ❌ |
+| Auto-sync JS helper | ✅ `sync-js` | ❌ | ❌ | ❌ |
+| Artisan commands | ✅ generate, clear, sync-js | ✅ purge, optimize | ❌ | ✅ Many |
 | **📊 MONITORING** |
 | Statistics & analytics | ✅ **v2.0+** | ✅ Full | ❌ | ✅ |
 | Performance metrics | ✅ **v2.0+** | ✅ | ❌ | ⚠️ |
@@ -81,6 +91,7 @@ Generate image thumbnails on-the-fly in Laravel with **Context-Aware Thumbnails�
 #### Choose **Laravel Context-Aware Thumbnails™ (moonlight-poland)** if you need:
 - ✅ **Context-Aware organization** (unique feature!)
 - ✅ Thumbnails organized by user/post/album automatically
+- ✅ **React/Vue/JavaScript support** (ONLY package with sync-js!)
 - ✅ **Auto-strategy**: Context-Aware for models, Hash for paths
 - ✅ **Smart Crop with energy detection** (v2.0)
 - ✅ **AVIF/WebP modern formats** (v2.0)
@@ -366,6 +377,8 @@ class UserPost extends Model
 
 ## 🎨 React / Vue / JavaScript Usage
 
+> **🌟 UNIQUE FEATURE:** We are the **ONLY Laravel thumbnail package** that provides seamless React/Vue/JavaScript integration with automatic context synchronization! Other packages only work with Blade.
+
 **IMPORTANT:** For React/Vue apps, you need to generate a JavaScript helper that mirrors your PHP config.
 
 ### Step 1: Generate JS Helper
@@ -382,6 +395,8 @@ This creates `resources/js/utils/thumbnails.js` with your contexts from `config/
 - Change filename patterns
 
 ### Step 2: Import in React/Vue
+
+**✅ YES, the import is REQUIRED!** Without it, your React/Vue components won't have thumbnail URLs.
 
 ```jsx
 // React Component
