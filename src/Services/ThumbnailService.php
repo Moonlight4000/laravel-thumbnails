@@ -396,8 +396,10 @@ class ThumbnailService
         
         // Clean up (suppress deprecation warning in PHP 8.1+)
         /** @phpstan-ignore-next-line */
+        /** @suppress PhanDeprecatedFunction */
         @imagedestroy($sourceImage);
         /** @phpstan-ignore-next-line */
+        /** @suppress PhanDeprecatedFunction */
         @imagedestroy($thumbnail);
     }
     
@@ -501,6 +503,7 @@ class ThumbnailService
         
         imagecopy($thumbnail, $tempThumb, (int)$offsetX, (int)$offsetY, 0, 0, (int)$destWidth, (int)$destHeight);
         /** @phpstan-ignore-next-line */
+        /** @suppress PhanDeprecatedFunction */
         @imagedestroy($tempThumb);
         
         // Return dummy values since we already did the copy
