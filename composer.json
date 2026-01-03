@@ -1,6 +1,6 @@
 {
     "name": "moonlight-poland/laravel-context-aware-thumbnails",
-    "version": "2.0.8",
+    "version": "2.0.9",
     "description": "Context-Aware on-demand thumbnail generation for Laravel with intelligent path organization, Smart Crop, AVIF/WebP support, and variants system. Automatically organize thumbnails by user/post/album. Zero config, blazing fast!",
     "keywords": [
         "laravel",
@@ -44,10 +44,6 @@
         "orchestra/testbench": "^8.0|^9.0",
         "mockery/mockery": "^1.6",
         "intervention/image": "^2.7|^3.0"
-    },
-    "suggest": {
-        "intervention/image": "For better image quality and more features",
-        "ext-imagick": "For better image processing performance"
     },
     "autoload": {
         "psr-4": {
