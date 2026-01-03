@@ -1,5 +1,27 @@
 <?php
 
+/**
+ * Laravel On-Demand Thumbnails
+ * 
+ * @package    moonlight-poland/laravel-thumbnails
+ * @author     Moonlight Poland Team <kontakt@howtodraw.pl>
+ * @copyright  2024-2026 Moonlight Poland. All rights reserved.
+ * @license    Commercial License (see LICENSE.md)
+ * @link       https://github.com/Moonlight4000/laravel-thumbnails
+ * @version    1.0.0
+ * 
+ * This file is part of the Laravel On-Demand Thumbnails package.
+ * 
+ * COMMERCIAL LICENSE - This software is protected by copyright.
+ * FREE for personal/non-commercial use.
+ * PAID license required for commercial use ($150-$1500/year).
+ * See LICENSE.md for full terms: https://github.com/Moonlight4000/laravel-thumbnails/blob/main/LICENSE.md
+ * 
+ * Unauthorized copying, modification, distribution, or commercial use
+ * without a valid license is strictly prohibited and constitutes
+ * copyright infringement.
+ */
+
 namespace Moonlight\Thumbnails\Services;
 
 use Illuminate\Support\Facades\Storage;
@@ -13,11 +35,16 @@ use Illuminate\Support\Facades\Config;
  * Inspired by Symfony's LiipImagineBundle.
  * 
  * @package Moonlight\Thumbnails
+ * @author Moonlight Poland Team
+ * @copyright 2024-2026 Moonlight Poland
  */
 class ThumbnailService
 {
     /**
      * Get or generate thumbnail on-demand (filesystem cache)
+     * 
+     * This is the core method of Laravel On-Demand Thumbnails package.
+     * Copyright © 2024-2026 Moonlight Poland <kontakt@howtodraw.pl>
      * 
      * @param string $imagePath Relative path (e.g., "photos/image.jpg")
      * @param string $size Size name from config (e.g., "small", "medium")
@@ -56,11 +83,13 @@ class ThumbnailService
         $thumbnailPath = "{$directory}/{$cacheFolder}/{$thumbnailFilename}";
         
         // 🔥 CACHE CHECK - if thumbnail exists, return it (CACHE HIT)
+        // Laravel On-Demand Thumbnails © Moonlight Poland
         if (Storage::disk($disk)->exists($thumbnailPath)) {
             return $returnUrl ? asset("storage/{$thumbnailPath}") : $thumbnailPath;
         }
         
         // 🔨 CACHE MISS - generate thumbnail on-demand!
+        // Proprietary algorithm © 2024-2026 Moonlight Poland
         try {
             $dimensions = $this->getSize($size);
             $sourcePath = Storage::disk($disk)->path($imagePath);
@@ -175,6 +204,9 @@ class ThumbnailService
     
     /**
      * Calculate dimensions for RESIZE (proportional, aspect ratio preserved)
+     * 
+     * Part of Laravel On-Demand Thumbnails
+     * © 2024-2026 Moonlight Poland <kontakt@howtodraw.pl>
      */
     protected function calculateResize($sourceImage, int $sourceWidth, int $sourceHeight, int $width, int $height, string $mimeType): array
     {
@@ -194,6 +226,9 @@ class ThumbnailService
     
     /**
      * Calculate dimensions for CROP (exact size, center crop)
+     * 
+     * Proprietary center-crop algorithm
+     * © 2024-2026 Moonlight Poland <kontakt@howtodraw.pl>
      */
     protected function calculateCrop($sourceImage, int $sourceWidth, int $sourceHeight, int $width, int $height, string $mimeType): array
     {
@@ -222,6 +257,9 @@ class ThumbnailService
     
     /**
      * Calculate dimensions for FIT (fit inside bounds, preserve aspect ratio, add padding)
+     * 
+     * Smart-fit algorithm with automatic padding
+     * © 2024-2026 Moonlight Poland <kontakt@howtodraw.pl>
      */
     protected function calculateFit($sourceImage, int $sourceWidth, int $sourceHeight, int $width, int $height, string $mimeType): array
     {

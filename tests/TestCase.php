@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Laravel On-Demand Thumbnails - Test Suite
+ * 
+ * @package    moonlight-poland/laravel-thumbnails
+ * @author     Moonlight Poland Team <kontakt@howtodraw.pl>
+ * @copyright  2024-2026 Moonlight Poland. All rights reserved.
+ * @license    Commercial License - See LICENSE.md
+ * @link       https://github.com/Moonlight4000/laravel-thumbnails
+ */
+
 namespace Moonlight\Thumbnails\Tests;
 
 use Orchestra\Testbench\TestCase as Orchestra;

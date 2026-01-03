@@ -1,5 +1,10 @@
 # 🖼️ Laravel On-Demand Thumbnails
 
+> **Copyright © 2024-2026 Moonlight Poland. All rights reserved.**  
+> **Contact:** kontakt@howtodraw.pl  
+> **License:** [Commercial License](LICENSE.md) - Free for personal use, paid for commercial use  
+> **Repository:** https://github.com/Moonlight4000/laravel-thumbnails
+
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/moonlight-poland/laravel-thumbnails.svg?style=flat-square)](https://packagist.org/packages/moonlight-poland/laravel-thumbnails)
 [![Total Downloads](https://img.shields.io/packagist/dt/moonlight-poland/laravel-thumbnails.svg?style=flat-square)](https://packagist.org/packages/moonlight-poland/laravel-thumbnails)
 [![License: Commercial](https://img.shields.io/badge/License-Commercial-blue.svg)](LICENSE.md)
