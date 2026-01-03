@@ -94,18 +94,8 @@ class ThumbnailFallback
                 
                 // Generate thumbnail on-demand!
                 try {
-                    Log::info('ThumbnailFallback: Generating thumbnail on-demand', [
-                        'original' => $originalPath,
-                        'size' => $size,
-                        'requested' => $path
-                    ]);
-                    
                     // Generate thumbnail (returns URL or data URI for blocked)
                     $thumbnailUrl = $this->thumbnailService->thumbnail($originalPath, $size, true);
-                    
-                    Log::info('ThumbnailFallback: Generated URL', [
-                        'thumbnail_url' => $thumbnailUrl
-                    ]);
                     
                     // Check if it's a data URI (blocked image)
                     if (str_starts_with($thumbnailUrl, 'data:image/')) {
@@ -126,17 +116,8 @@ class ThumbnailFallback
                     $thumbnailPath = str_replace([asset('storage/'), '/storage/'], '', $thumbnailUrl);
                     $thumbnailPath = ltrim($thumbnailPath, '/'); // Remove leading slash
                     
-                    Log::info('ThumbnailFallback: Checking file', [
-                        'thumbnail_path' => $thumbnailPath,
-                        'disk' => $disk,
-                        'full_path' => Storage::disk($disk)->path($thumbnailPath)
-                    ]);
-                    
                     // Verify thumbnail was generated
                     if (!Storage::disk($disk)->exists($thumbnailPath)) {
-                        Log::error('ThumbnailFallback: Generation succeeded but file not found', [
-                            'thumbnail_path' => $thumbnailPath
-                        ]);
                         return $response;
                     }
                     

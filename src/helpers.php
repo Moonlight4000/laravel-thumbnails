@@ -22,7 +22,6 @@ if (!function_exists('thumbnail')) {
      * @param bool $returnUrl Return URL instead of path
      * @param string|null $context Context name (post, gallery, avatar, etc.)
      * @param array $contextData Context data (e.g., ['user_id' => 1, 'post_id' => 12])
-     * @param bool $generateOnDemand Generate thumbnail immediately (default: false, middleware will handle)
      * @return string|null
      */
     function thumbnail(
