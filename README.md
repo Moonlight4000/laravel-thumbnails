@@ -74,7 +74,7 @@ Generate image thumbnails on-the-fly in Laravel with **Context-Aware Thumbnails�
 | **📦 INSTALLATION** |
 | Installs | 🆕 New | 17 | ~500 | 50,000+ |
 | Stars | ⭐ New | 1 | ~50 | 5,000+ |
-| Maturity | 🆕 v1.1 | 🆕 v2.0 | ⚠️ v1.x | ✅ v11.x |
+| Maturity | 🆕 v2.0.1 | 🆕 v2.0 | ⚠️ v1.x | ✅ v11.x |
 
 ### 🎯 Which Package Should You Choose?
 
