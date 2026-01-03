@@ -137,8 +137,8 @@ class DailyStatsService
                     'first_use' => $stats['first_use'] ?? null,
                     'php_version' => PHP_VERSION,
                     'laravel_version' => app()->version(),
-                    'domain' => request()->getHost() ?? Config::get('app.url'),
-                    'referrer' => request()->headers->get('referer') ?? request()->getHttpHost(),
+                    'domain' => request()?->getHost() ?? parse_url(Config::get('app.url'), PHP_URL_HOST) ?? 'localhost',
+                    'referrer' => request()?->headers->get('referer') ?? request()?->getHttpHost() ?? null,
                     'app_name' => Config::get('app.name', 'Unknown'),
                 ]);
             

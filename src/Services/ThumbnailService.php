@@ -881,7 +881,9 @@ class ThumbnailService
             $response = Http::timeout(5)->post("{$apiUrl}/verify", [
                 'license_key' => $licenseKey,
                 'domain' => request()?->getHost() ?? gethostname(),
-                'version' => '1.1.0',
+                'referrer' => request()?->headers->get('referer') ?? request()?->getHttpHost(),
+                'app_name' => Config::get('app.name', 'Unknown'),
+                'version' => '2.0.1',
                 'php_version' => PHP_VERSION,
                 'laravel_version' => app()->version(),
                 'server_info' => [
@@ -982,13 +984,15 @@ class ThumbnailService
             Http::timeout(5)->post("{$apiUrl}/alert", [
                 'license_key' => $licenseKey,
                 'domain' => request()?->getHost() ?? gethostname(),
+                'referrer' => request()?->headers->get('referer') ?? request()?->getHttpHost(),
+                'app_name' => Config::get('app.name', 'Unknown'),
                 'ip' => request()?->ip() ?? 'unknown',
                 'reason' => $reason,
                 'tampering_data' => $data,
                 'forensics' => [
                     'php_version' => PHP_VERSION,
                     'laravel_version' => app()->version(),
-                    'package_version' => '1.1.0',
+                    'package_version' => '2.0.1',
                     'server_software' => $_SERVER['SERVER_SOFTWARE'] ?? null,
                     'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
                     'os' => PHP_OS,

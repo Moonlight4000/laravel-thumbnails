@@ -340,18 +340,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Fallback on Error
-    |--------------------------------------------------------------------------
-    |
-    | If thumbnail generation fails, return the original image URL instead
-    | of throwing an exception. Recommended: true for production.
-    |
-    */
-
-    'fallback_on_error' => env('THUMBNAILS_FALLBACK', true),
-
-    /*
-    |--------------------------------------------------------------------------
     | Generate on Upload
     |--------------------------------------------------------------------------
     |
