@@ -75,7 +75,8 @@
     ],
     "intelephense.environment.includePaths": [
         ".intelephense"
-    ]
+    ],
+    "laravel-extension.validateEnvVars": false
 }
 
 
