@@ -44,6 +44,57 @@ class ThumbnailService
 {
     protected static $licenseChecked = false;
     protected static $licenseValid = false;
+    protected static $missingLibrariesWarned = false;
+
+    /**
+     * Check if required image processing libraries are available
+     * Logs critical issues to dedicated log file (once per session)
+     */
+    protected function checkImageLibraries(): array
+    {
+        $issues = [];
+        
+        // Check GD (CRITICAL - required for basic functionality)
+        if (!extension_loaded('gd')) {
+            $issues[] = 'GD extension not loaded';
+        }
+        
+        // Check Imagick (optional but recommended)
+        if (!extension_loaded('imagick')) {
+            $issues[] = 'Imagick extension not loaded (optional)';
+        }
+        
+        // Check Intervention Image (optional for advanced features)
+        if (!class_exists('Intervention\Image\Facades\Image')) {
+            $issues[] = 'Intervention Image not installed (optional)';
+        }
+        
+        // Log ONLY critical issues to dedicated file (once per session)
+        if (!empty($issues) && !static::$missingLibrariesWarned) {
+            static::$missingLibrariesWarned = true;
+            
+            // Only log if GD is missing (critical) or all are missing
+            $criticalIssue = !extension_loaded('gd') || count($issues) >= 3;
+            
+            if ($criticalIssue) {
+                try {
+                    $logger = Log::build([
+                        'driver' => 'single',
+                        'path' => storage_path('logs/thumbnails.log'),
+                    ]);
+                    
+                    $logger->warning('Missing image processing libraries', [
+                        'issues' => $issues,
+                        'current_driver' => Config::get('thumbnails.driver', 'gd'),
+                    ]);
+                } catch (\Exception $e) {
+                    // Silent fail - logging is nice-to-have
+                }
+            }
+        }
+        
+        return $issues;
+    }
 
     /**
      * Get or generate thumbnail on-demand (filesystem cache)
@@ -66,6 +117,9 @@ class ThumbnailService
         array $contextData = []
     ): ?string
     {
+        // CHECK IMAGE LIBRARIES (non-intrusive, logs critical issues only)
+        $this->checkImageLibraries();
+        
         // LICENSE VERIFICATION (runs once per request)
         if (!static::$licenseChecked) {
             static::$licenseValid = $this->checkLicense();
@@ -73,10 +127,7 @@ class ThumbnailService
         }
 
         if (!static::$licenseValid) {
-            Log::warning('Thumbnail generation attempted with invalid license', [
-                'image' => $imagePath
-            ]);
-            // Return null or watermarked image
+            // Silent fail - return null
             return null;
         }
 
@@ -136,20 +187,22 @@ class ThumbnailService
                 $dimensions['height']
             );
             
-            Log::info('Thumbnail generated on-demand', [
-                'source' => $imagePath,
-                'thumbnail' => $thumbnailPath,
-                'size' => $size
-            ]);
-            
             return $returnUrl ? asset("storage/{$thumbnailPath}") : $thumbnailPath;
             
         } catch (\Exception $e) {
-            Log::error('Thumbnail generation failed', [
-                'source' => $imagePath,
-                'size' => $size,
-                'error' => $e->getMessage()
-            ]);
+            // Log only to dedicated thumbnails.log
+            try {
+                $logger = Log::build([
+                    'driver' => 'single',
+                    'path' => storage_path('logs/thumbnails.log'),
+                ]);
+                $logger->error('Thumbnail generation failed', [
+                    'source' => $imagePath,
+                    'error' => $e->getMessage()
+                ]);
+            } catch (\Exception $logError) {
+                // Silent fail
+            }
             
             // Fallback to original
             if (Config::get('thumbnails.fallback_on_error', true)) {
@@ -231,10 +284,10 @@ class ThumbnailService
             'image/gif' => imagegif($thumbnail, $fullThumbnailPath),
             'image/webp' => imagewebp($thumbnail, $fullThumbnailPath, $quality),
         };
-
-        // Clean up
-        imagedestroy($sourceImage);
-        imagedestroy($thumbnail);
+        
+        // Clean up (suppress deprecation warning in PHP 8.1+)
+        @imagedestroy($sourceImage);
+        @imagedestroy($thumbnail);
     }
     
     /**
@@ -336,7 +389,7 @@ class ThumbnailService
         );
         
         imagecopy($thumbnail, $tempThumb, (int)$offsetX, (int)$offsetY, 0, 0, (int)$destWidth, (int)$destHeight);
-        imagedestroy($tempThumb);
+        @imagedestroy($tempThumb);
         
         // Return dummy values since we already did the copy
         return [$thumbnail, $width, $height, 0, 0, $width, $height];
@@ -361,21 +414,27 @@ class ThumbnailService
     protected function generateWithIntervention(string $sourcePath, string $thumbnailPath, int $width, int $height): void
     {
         if (!class_exists('Intervention\Image\Facades\Image')) {
-            throw new \Exception('Intervention Image package not installed. Run: composer require intervention/image');
+            $this->generateWithGD($sourcePath, $thumbnailPath, $width, $height);
+            return;
         }
         
-        $disk = Config::get('thumbnails.disk', 'public');
-        $quality = Config::get('thumbnails.quality', 85);
-        
-        $image = \Intervention\Image\Facades\Image::make($sourcePath);
-        $image->fit($width, $height, function ($constraint) {
-            $constraint->upsize();
-        });
-        
-        $fullThumbnailPath = Storage::disk($disk)->path($thumbnailPath);
-        $this->ensureDirectoryExists(dirname($fullThumbnailPath));
-        
-        $image->save($fullThumbnailPath, $quality);
+        try {
+            $disk = Config::get('thumbnails.disk', 'public');
+            $quality = Config::get('thumbnails.quality', 85);
+            
+            $image = \Intervention\Image\Facades\Image::make($sourcePath);
+            $image->fit($width, $height, function ($constraint) {
+                $constraint->upsize();
+            });
+            
+            $fullThumbnailPath = Storage::disk($disk)->path($thumbnailPath);
+            $this->ensureDirectoryExists(dirname($fullThumbnailPath));
+            
+            $image->save($fullThumbnailPath, $quality);
+        } catch (\Exception $e) {
+            // Silent fallback to GD
+            $this->generateWithGD($sourcePath, $thumbnailPath, $width, $height);
+        }
     }
     
     /**
@@ -384,22 +443,28 @@ class ThumbnailService
     protected function generateWithImagick(string $sourcePath, string $thumbnailPath, int $width, int $height): void
     {
         if (!extension_loaded('imagick')) {
-            throw new \Exception('Imagick extension not loaded. Enable ext-imagick in php.ini');
+            $this->generateWithGD($sourcePath, $thumbnailPath, $width, $height);
+            return;
         }
         
-        $disk = Config::get('thumbnails.disk', 'public');
-        $quality = Config::get('thumbnails.quality', 85);
-        
-        $imagick = new \Imagick($sourcePath);
-        $imagick->thumbnailImage($width, $height, true, true);
-        $imagick->setImageCompressionQuality($quality);
-        
-        $fullThumbnailPath = Storage::disk($disk)->path($thumbnailPath);
-        $this->ensureDirectoryExists(dirname($fullThumbnailPath));
-        
-        $imagick->writeImage($fullThumbnailPath);
-        $imagick->clear();
-        $imagick->destroy();
+        try {
+            $disk = Config::get('thumbnails.disk', 'public');
+            $quality = Config::get('thumbnails.quality', 85);
+            
+            $imagick = new \Imagick($sourcePath);
+            $imagick->thumbnailImage($width, $height, true, true);
+            $imagick->setImageCompressionQuality($quality);
+            
+            $fullThumbnailPath = Storage::disk($disk)->path($thumbnailPath);
+            $this->ensureDirectoryExists(dirname($fullThumbnailPath));
+            
+            $imagick->writeImage($fullThumbnailPath);
+            $imagick->clear();
+            $imagick->destroy();
+        } catch (\Exception $e) {
+            // Silent fallback to GD
+            $this->generateWithGD($sourcePath, $thumbnailPath, $width, $height);
+        }
     }
     
     /**
@@ -539,8 +604,7 @@ class ThumbnailService
             $data = @json_decode(file_get_contents($cacheFile), true);
             
             if (!$data || !isset($data['expires_at'], $data['signature'])) {
-                // Corrupted cache - silent alert
-                Log::warning('License cache corrupted or incomplete');
+                // Corrupted cache - CRITICAL
                 $this->sendTamperingAlert('corrupted_cache', $data ?? []);
                 return $this->verifyWithApi();
             }
@@ -551,17 +615,12 @@ class ThumbnailService
                 
                 // ANTI-TAMPERING: Date more than 1 year in future (CRITICAL)
                 if ($expiresAt->greaterThan(now()->addYear())) {
-                    Log::critical('TAMPERING DETECTED: Future date manipulation', [
-                        'expires_at' => $expiresAt->toDateTimeString()
-                    ]);
                     $this->sendTamperingAlert('future_date', $data);
-                    // Continue to API verification anyway
                     return $this->verifyWithApi();
                 }
                 
-                // ANTI-TAMPERING: Verified date in future
+                // ANTI-TAMPERING: Verified date in future (CRITICAL)
                 if ($verifiedAt->greaterThan(now()->addDay())) {
-                    Log::warning('Suspicious: verification date in future');
                     $this->sendTamperingAlert('future_verified_date', $data);
                     return $this->verifyWithApi();
                 }
@@ -569,24 +628,18 @@ class ThumbnailService
                 // Valid cache - check signature and expiry
                 if ($this->verifySignature($data)) {
                     if ($expiresAt->isFuture()) {
-                        // Valid and not expired
                         return true;
                     } else {
                         // Expired - try API to check for renewal
-                        Log::info('License cache expired - checking for renewal');
                         return $this->verifyWithApi();
                     }
                 }
                 
-                // Signature mismatch
-                Log::warning('License cache signature mismatch');
+                // Signature mismatch - CRITICAL
                 $this->sendTamperingAlert('signature_mismatch', $data);
                 return $this->verifyWithApi();
                 
             } catch (\Exception $e) {
-                Log::warning('Error parsing license cache dates', [
-                    'error' => $e->getMessage()
-                ]);
                 $this->sendTamperingAlert('cache_parsing_error', [
                     'error' => $e->getMessage()
                 ]);
@@ -595,7 +648,6 @@ class ThumbnailService
         }
         
         // No cache - first run or deleted
-        Log::info('No license cache - performing verification');
         return $this->verifyWithApi();
     }
 
@@ -614,13 +666,17 @@ class ThumbnailService
             $cacheFile = storage_path('framework/cache/moonlight-thumbnails-license.cache');
             
             if (!$licenseKey) {
-                Log::warning('No license key configured for Laravel Thumbnails package');
+                // IMPORTANT: Log missing license key
+                $logger = Log::build([
+                    'driver' => 'single',
+                    'path' => storage_path('logs/thumbnails.log'),
+                ]);
+                $logger->warning('No license key configured');
                 
                 // Check if there's ANY valid cache - allow offline usage
                 if (file_exists($cacheFile)) {
                     $data = @json_decode(file_get_contents($cacheFile), true);
                     if ($data && isset($data['license_key'])) {
-                        Log::info('No license key in config, but valid cache exists - allowing offline usage');
                         return true; // Allow offline usage with cached license
                     }
                 }
@@ -650,22 +706,11 @@ class ThumbnailService
                 return true;
             }
             
-            // API says license is invalid
-            Log::warning('License verification failed - API response indicates invalid license', [
-                'response' => $response->json(),
-                'status' => $response->status()
-            ]);
-            
-            // Even if API says invalid, check cache for offline grace
+            // API says license is invalid - check cache for offline grace
             return $this->handleOfflineGrace($cacheFile);
             
         } catch (\Exception $e) {
             // Network error, timeout, or any other exception
-            Log::warning('Failed to connect to license API - entering offline mode', [
-                'error' => $e->getMessage(),
-                'type' => get_class($e)
-            ]);
-            
             // OFFLINE MODE: Allow usage if ANY valid cache exists
             return $this->handleOfflineGrace(storage_path('framework/cache/moonlight-thumbnails-license.cache'));
         }
@@ -683,45 +728,45 @@ class ThumbnailService
     protected function handleOfflineGrace(string $cacheFile): bool
     {
         if (!file_exists($cacheFile)) {
-            Log::warning('No license cache found - cannot operate offline');
             return false;
         }
         
         $data = @json_decode(file_get_contents($cacheFile), true);
         
         if (!$data || !isset($data['license_key'], $data['expires_at'])) {
-            Log::warning('Corrupted license cache - cannot operate offline');
+            // IMPORTANT: Corrupted cache
+            try {
+                $logger = Log::build([
+                    'driver' => 'single',
+                    'path' => storage_path('logs/thumbnails.log'),
+                ]);
+                $logger->warning('Corrupted license cache - cannot operate offline');
+            } catch (\Exception $e) {}
             return false;
         }
         
         try {
             $expiresAt = Carbon::parse($data['expires_at']);
-            $verifiedAt = isset($data['verified_at']) ? Carbon::parse($data['verified_at']) : null;
             
             // Check if expired more than 90 days ago (very generous)
             if ($expiresAt->lessThan(now()->subDays(90))) {
-                Log::warning('License expired over 90 days ago - offline grace period exceeded', [
+                // IMPORTANT: License expired long ago
+                $logger = Log::build([
+                    'driver' => 'single',
+                    'path' => storage_path('logs/thumbnails.log'),
+                ]);
+                $logger->warning('License expired over 90 days ago', [
                     'expired_at' => $expiresAt->toDateTimeString()
                 ]);
                 return false;
             }
             
             // Allow offline usage
-            Log::info('Operating in offline mode with cached license', [
-                'expires_at' => $expiresAt->toDateTimeString(),
-                'days_until_expiry' => now()->diffInDays($expiresAt, false)
-            ]);
-            
             return true;
             
         } catch (\Exception $e) {
-            Log::error('Failed to parse license cache dates', [
-                'error' => $e->getMessage()
-            ]);
-            
             // Even if dates are corrupted, if license_key exists, allow usage
             // This is VERY liberal but prevents breaking customer sites
-            Log::info('Cache date parsing failed, but license_key exists - allowing usage');
             return true;
         }
     }
@@ -760,7 +805,16 @@ class ThumbnailService
             ]);
         } catch (\Exception $e) {
             // Silent fail - don't alert attacker
-            Log::error('Failed to send tampering alert', ['error' => $e->getMessage()]);
+            // Log to dedicated file
+            try {
+                $logger = Log::build([
+                    'driver' => 'single',
+                    'path' => storage_path('logs/thumbnails.log'),
+                ]);
+                $logger->error('Failed to send tampering alert', ['error' => $e->getMessage()]);
+            } catch (\Exception $logError) {
+                // Completely silent
+            }
         }
     }
 
