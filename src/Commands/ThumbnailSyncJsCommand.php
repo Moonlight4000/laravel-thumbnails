@@ -60,7 +60,8 @@ class ThumbnailSyncJsCommand extends Command
         $contextsJson = json_encode($contexts, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         $sizesJson = json_encode(array_keys($sizes), JSON_PRETTY_PRINT);
         
-        return <<<JS
+        // Use single quotes to avoid PHP variable interpolation in JS code
+        return <<<'JS'
 /**
  * Thumbnail Helper - Auto-generated from config/thumbnails.php
  * 
@@ -75,22 +76,22 @@ class ThumbnailSyncJsCommand extends Command
  * Context-Aware™ path patterns
  * Source: config/thumbnails.php -> contexts
  */
-export const THUMBNAIL_CONTEXTS = {$contextsJson};
+export const THUMBNAIL_CONTEXTS = CONTEXTS_JSON_PLACEHOLDER;
 
 /**
  * Available thumbnail sizes
  */
-export const THUMBNAIL_SIZES = {$sizesJson};
+export const THUMBNAIL_SIZES = SIZES_JSON_PLACEHOLDER;
 
 /**
  * Cache folder name (where thumbnails are stored)
  */
-export const CACHE_FOLDER = '{$cacheFolder}';
+export const CACHE_FOLDER = 'CACHE_FOLDER_PLACEHOLDER';
 
 /**
  * Filename pattern for thumbnails
  */
-export const FILENAME_PATTERN = '{$filenamePattern}';
+export const FILENAME_PATTERN = 'FILENAME_PATTERN_PLACEHOLDER';
 
 /**
  * Build Context-Aware path from context name and data
@@ -132,8 +133,8 @@ export function getThumbnailUrl(path, size = 'small') {
     if (!path) return null;
     
     // Parse path: user-posts/1/12/img.jpg → directory + filename + extension
-    const match = path.match(/^(.+)\\/([^/]+)\\.([^.]+)$/);
-    if (!match) return `/storage/\${path}`; // Fallback to original
+    const match = path.match(/^(.+)\/([^/]+)\.([^.]+)$/);
+    if (!match) return `/storage/${path}`; // Fallback to original
     
     const [, directory, basename, extension] = match;
     
@@ -144,7 +145,7 @@ export function getThumbnailUrl(path, size = 'small') {
         .replace('{size}', size)
         .replace('{ext}', extension);
     
-    return `/storage/\${directory}/\${CACHE_FOLDER}/\${thumbnailFilename}`;
+    return `/storage/${directory}/${CACHE_FOLDER}/${thumbnailFilename}`;
 }
 
 /**
@@ -173,8 +174,8 @@ export function getThumbnailUrlWithContext(filename, size = 'small', context = n
     }
     
     // Parse filename
-    const match = filename.match(/^(.+)\\.([^.]+)$/);
-    if (!match) return `/storage/\${basePath}\${filename}`;
+    const match = filename.match(/^(.+)\.([^.]+)$/);
+    if (!match) return `/storage/${basePath}${filename}`;
     
     const [, basename, extension] = match;
     
@@ -184,7 +185,7 @@ export function getThumbnailUrlWithContext(filename, size = 'small', context = n
         .replace('{size}', size)
         .replace('{ext}', extension);
     
-    return `/storage/\${basePath}\${CACHE_FOLDER}/\${thumbnailFilename}`;
+    return `/storage/${basePath}${CACHE_FOLDER}/${thumbnailFilename}`;
 }
 
 /**
@@ -201,6 +202,14 @@ export default {
 };
 
 JS;
+        
+        // Replace placeholders
+        $js = str_replace('CONTEXTS_JSON_PLACEHOLDER', $contextsJson, $js);
+        $js = str_replace('SIZES_JSON_PLACEHOLDER', $sizesJson, $js);
+        $js = str_replace('CACHE_FOLDER_PLACEHOLDER', $cacheFolder, $js);
+        $js = str_replace('FILENAME_PATTERN_PLACEHOLDER', $filenamePattern, $js);
+        
+        return $js;
     }
 }
 
