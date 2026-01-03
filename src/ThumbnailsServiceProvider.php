@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Blade;
 use Moonlight\Thumbnails\Services\ThumbnailService;
 use Moonlight\Thumbnails\Middleware\ThumbnailFallback;
 use Moonlight\Thumbnails\Commands\ThumbnailGenerateCommand;
-use Moonlight\Thumbnails\Commands\ThumbnailClearCommand;
+use Moonlight\Thumbnails\Commands\ThumbnailSyncJsCommand;
 
 /**
  * ThumbnailsServiceProvider
@@ -65,6 +65,7 @@ class ThumbnailsServiceProvider extends ServiceProvider
             $this->commands([
                 ThumbnailGenerateCommand::class,
                 ThumbnailClearCommand::class,
+                ThumbnailSyncJsCommand::class,
             ]);
         }
         

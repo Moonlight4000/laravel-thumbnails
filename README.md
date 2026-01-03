@@ -338,6 +338,165 @@ class UserPost extends Model
 
 ### Benefits
 
+✅ **Perfect organization** - thumbnails live with their content  
+✅ **Easy cleanup** - delete post folder, thumbnails gone  
+✅ **Per-user isolation** - great for multi-tenant apps  
+✅ **CDN-friendly** - route `/user-posts/1/*` to User 1's CDN  
+✅ **Faster backups** - backup specific content types  
+✅ **Better performance** - fewer files per directory  
+
+---
+
+## 🎨 React / Vue / JavaScript Usage
+
+**IMPORTANT:** For React/Vue apps, you need to generate a JavaScript helper that mirrors your PHP config.
+
+### Step 1: Generate JS Helper
+
+```bash
+php artisan thumbnails:sync-js
+```
+
+This creates `resources/js/utils/thumbnails.js` with your contexts from `config/thumbnails.php`.
+
+**Run this command whenever you:**
+- Change `config/thumbnails.php`
+- Add new contexts
+- Change filename patterns
+
+### Step 2: Import in React/Vue
+
+```jsx
+// React Component
+import { getThumbnailUrl } from '@/utils/thumbnails';
+
+function PostMedia({ post }) {
+    const mediaFiles = post.media_files || [];
+    
+    return (
+        <div>
+            {mediaFiles.map((media, index) => (
+                <img 
+                    key={index}
+                    src={getThumbnailUrl(media.path, 'small')}
+                    alt={media.alt}
+                />
+            ))}
+        </div>
+    );
+}
+```
+
+### Available Functions
+
+```js
+import { 
+    getThumbnailUrl,              // Basic usage
+    getThumbnailUrlWithContext,   // With Context-Aware
+    buildContextPath,             // Build context path only
+    THUMBNAIL_CONTEXTS,           // Available contexts
+    THUMBNAIL_SIZES               // Available sizes
+} from '@/utils/thumbnails';
+
+// Basic usage (path already includes context)
+const url = getThumbnailUrl('user-posts/1/12/img.jpg', 'small');
+// → /storage/user-posts/1/12/thumbnails/img_thumb_small.jpg
+
+// Context-Aware (filename + context + data)
+const url = getThumbnailUrlWithContext(
+    'img.jpg',              // Just filename
+    'small',                // Size
+    'post',                 // Context
+    { user_id: 1, post_id: 12 }  // Context data
+);
+// → /storage/user-posts/1/12/thumbnails/img_thumb_small.jpg
+
+// Build context path only
+const path = buildContextPath('post', { user_id: 1, post_id: 12 });
+// → user-posts/1/12
+```
+
+### PHP Backend Setup for React
+
+In your **PHP accessor** (e.g., `UserPost.php`):
+
+```php
+// Return ONLY path, React will build thumbnail URL
+public function getMediaFilesAttribute(): array
+{
+    $mediaFiles = [];
+    
+    foreach ($this->attachments as $attachment) {
+        if ($attachment['type'] === 'image') {
+            $mediaFiles[] = [
+                'type' => $attachment['type'],
+                'path' => $attachment['path'],  // e.g., 'user-posts/1/12/img.jpg'
+                'url' => asset('storage/' . $attachment['path']),
+                'alt' => $attachment['original_name'],
+            ];
+        }
+    }
+    
+    return $mediaFiles;
+}
+```
+
+**React will:**
+1. Call `getThumbnailUrl(media.path, 'small')`
+2. Build URL: `/storage/user-posts/1/12/thumbnails/img_thumb_small.jpg`
+3. Browser requests thumbnail
+4. **404** on first request → middleware generates thumbnail
+5. **200** on next requests → cached file served by Nginx
+
+### Workflow
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ 1. Change config/thumbnails.php                        │
+│    (add new context, change pattern, etc.)             │
+└─────────────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────────────┐
+│ 2. Run: php artisan thumbnails:sync-js                 │
+│    Generates: resources/js/utils/thumbnails.js         │
+└─────────────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────────────┐
+│ 3. Commit thumbnails.js to git                         │
+│    (single source of truth in PHP, synced to JS)       │
+└─────────────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────────────┐
+│ 4. React uses getThumbnailUrl() automatically          │
+│    (always in sync with PHP config)                    │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Vue Example
+
+```vue
+<template>
+    <div v-for="media in post.media_files" :key="media.path">
+        <img 
+            :src="getThumbnailUrl(media.path, 'small')" 
+            :alt="media.alt"
+        />
+    </div>
+</template>
+
+<script setup>
+import { getThumbnailUrl } from '@/utils/thumbnails';
+
+const props = defineProps({
+    post: Object
+});
+</script>
+```
+
+---
+
+## 📦 Benefits
+
 1. **✅ Automatic Cleanup** - Delete post folder = all thumbnails gone
 2. **✅ Per-User Isolation** - Easy permissions & backups per user
 3. **✅ CDN Routing** - Route different contexts to different CDNs
