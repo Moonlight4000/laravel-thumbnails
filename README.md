@@ -1,13 +1,13 @@
-# 🖼️ Laravel Smart Thumbnails™
-### Context-Aware On-Demand Image Thumbnails
+# 🖼️ Laravel Context-Aware Thumbnails™
+### Intelligent On-Demand Image Thumbnails with Smart Crop & Modern Formats
 
 > **Copyright © 2024-2026 Moonlight Poland. All rights reserved.**  
 > **Contact:** kontakt@howtodraw.pl  
 > **License:** [Commercial License](LICENSE.md) - Free for personal use, paid for commercial use  
 > **Repository:** https://github.com/Moonlight4000/laravel-thumbnails
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/moonlight-poland/laravel-smart-thumbnails.svg?style=flat-square)](https://packagist.org/packages/moonlight-poland/laravel-smart-thumbnails)
-[![Total Downloads](https://img.shields.io/packagist/dt/moonlight-poland/laravel-smart-thumbnails.svg?style=flat-square)](https://packagist.org/packages/moonlight-poland/laravel-smart-thumbnails)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/moonlight-poland/laravel-context-aware-thumbnails.svg?style=flat-square)](https://packagist.org/packages/moonlight-poland/laravel-context-aware-thumbnails)
+[![Total Downloads](https://img.shields.io/packagist/dt/moonlight-poland/laravel-context-aware-thumbnails.svg?style=flat-square)](https://packagist.org/packages/moonlight-poland/laravel-context-aware-thumbnails)
 [![License: Commercial](https://img.shields.io/badge/License-Commercial-blue.svg)](LICENSE.md)
 
 Generate image thumbnails on-the-fly in Laravel with **Context-Aware Thumbnails™** - the only package that organizes thumbnails exactly where your content lives!
@@ -78,14 +78,18 @@ Generate image thumbnails on-the-fly in Laravel with **Context-Aware Thumbnails�
 
 ### 🎯 Which Package Should You Choose?
 
-#### Choose **Laravel Smart Thumbnails™ (moonlight-poland)** if you need:
+#### Choose **Laravel Context-Aware Thumbnails™ (moonlight-poland)** if you need:
 - ✅ **Context-Aware organization** (unique feature!)
 - ✅ Thumbnails organized by user/post/album automatically
+- ✅ **Auto-strategy**: Context-Aware for models, Hash for paths
+- ✅ **Smart Crop with energy detection** (v2.0)
+- ✅ **AVIF/WebP modern formats** (v2.0)
+- ✅ **Variants system** for multiple sizes (v2.0)
+- ✅ **Daily usage statistics** sent to Moonlight (v2.0)
 - ✅ Blade directives and helpers for easy use
 - ✅ Automatic middleware fallback
 - ✅ Commercial support with licensing
 - ✅ Simple filesystem-based solution
-- ✅ **Coming in v2.0:** AVIF, WebP, Smart Crop, Statistics
 
 #### Choose **askancy/laravel-smart-thumbnails** if you need:
 - ✅ Advanced smart crop algorithm (energy detection) - **NOW**

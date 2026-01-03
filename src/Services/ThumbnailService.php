@@ -29,6 +29,11 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
+use Moonlight\Thumbnails\Services\Strategies\StrategyInterface;
+use Moonlight\Thumbnails\Services\Strategies\ContextAwareStrategy;
+use Moonlight\Thumbnails\Services\Strategies\HashPrefixStrategy;
+use Moonlight\Thumbnails\Services\Strategies\DateBasedStrategy;
+use Moonlight\Thumbnails\Services\Strategies\HashLevelsStrategy;
 
 /**
  * ThumbnailService
@@ -45,6 +50,14 @@ class ThumbnailService
     protected static $licenseChecked = false;
     protected static $licenseValid = false;
     protected static $missingLibrariesWarned = false;
+    
+    /** @var StrategyInterface[] */
+    protected array $strategies = [];
+    
+    public function __construct()
+    {
+        $this->loadStrategies();
+    }
 
     /**
      * Check if required image processing libraries are available
@@ -94,6 +107,65 @@ class ThumbnailService
         }
         
         return $issues;
+    }
+    
+    /**
+     * Load and initialize subdirectory strategies
+     */
+    protected function loadStrategies(): void
+    {
+        $config = Config::get('thumbnails.subdirectory.strategies', []);
+        
+        foreach ($config as $name => $settings) {
+            if (!($settings['enabled'] ?? true)) {
+                continue;
+            }
+            
+            $strategy = match($name) {
+                'context-aware' => new ContextAwareStrategy($settings),
+                'hash-prefix' => new HashPrefixStrategy($settings),
+                'date-based' => new DateBasedStrategy($settings),
+                'hash-levels' => new HashLevelsStrategy($settings),
+                default => null,
+            };
+            
+            if ($strategy) {
+                $this->strategies[] = $strategy;
+            }
+        }
+        
+        // Sort by priority (highest first)
+        usort($this->strategies, fn($a, $b) => $b->priority() <=> $a->priority());
+    }
+    
+    /**
+     * Resolve the best strategy for given context
+     * 
+     * @param mixed $context Model instance or null
+     * @param string $path Original image path
+     * @return StrategyInterface
+     */
+    protected function resolveStrategy(mixed $context, string $path): StrategyInterface
+    {
+        // Check if auto-strategy is enabled
+        if (!Config::get('thumbnails.subdirectory.auto_strategy', true)) {
+            $manualStrategy = Config::get('thumbnails.subdirectory.manual_strategy', 'context-aware');
+            foreach ($this->strategies as $strategy) {
+                if ($strategy->getName() === $manualStrategy) {
+                    return $strategy;
+                }
+            }
+        }
+        
+        // Auto-detect: first strategy that supports this context
+        foreach ($this->strategies as $strategy) {
+            if ($strategy->supports($context, $path)) {
+                return $strategy;
+            }
+        }
+        
+        // Fallback: return first strategy (should be hash-prefix)
+        return $this->strategies[0] ?? new HashPrefixStrategy([]);
     }
 
     /**
@@ -479,6 +551,49 @@ class ThumbnailService
         }
         
         return $sizes[$sizeName];
+    }
+    
+    /**
+     * Get dedicated logger for thumbnails
+     */
+    protected function getLogger()
+    {
+        return Log::build([
+            'driver' => 'single',
+            'path' => storage_path('logs/thumbnails.log'),
+        ]);
+    }
+    
+    /**
+     * Build thumbnail path using strategy system
+     * Supports both new model-based and legacy string-based contexts
+     * 
+     * @param mixed $modelContext Model instance for Context-Aware strategy
+     * @param string $imagePath Original image path
+     * @param string $thumbnailFilename Generated thumbnail filename
+     * @param string|null $legacyContext Legacy context name (for backward compatibility)
+     * @param array $legacyContextData Legacy context data (for backward compatibility)
+     * @return string Thumbnail path
+     */
+    protected function buildThumbnailPathWithStrategy(
+        mixed $modelContext,
+        string $imagePath,
+        string $thumbnailFilename,
+        ?string $legacyContext = null,
+        array $legacyContextData = []
+    ): string
+    {
+        // If legacy context provided, use old system for backward compatibility
+        if ($legacyContext && !empty($legacyContextData)) {
+            $contextPath = $this->resolveContextPath($legacyContext, $legacyContextData);
+            return "{$contextPath}/thumbnails/{$thumbnailFilename}";
+        }
+        
+        // Use new strategy system
+        $strategy = $this->resolveStrategy($modelContext, $imagePath);
+        $params = []; // Can be extended with width/height/method if needed
+        
+        return $strategy->buildPath($modelContext, $thumbnailFilename, $params);
     }
     
     /**

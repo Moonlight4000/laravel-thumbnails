@@ -1,6 +1,7 @@
 {
-    "name": "moonlight-poland/laravel-smart-thumbnails",
-    "description": "Smart on-demand thumbnail generation for Laravel with Context-Aware organization - automatically organize thumbnails by user/post/album. Zero config, filesystem-cached, blazing fast. The only Laravel package with intelligent path organization!",
+    "name": "moonlight-poland/laravel-context-aware-thumbnails",
+    "version": "2.0.0",
+    "description": "Context-Aware on-demand thumbnail generation for Laravel with intelligent path organization, Smart Crop, AVIF/WebP support, and variants system. Automatically organize thumbnails by user/post/album. Zero config, blazing fast!",
     "keywords": [
         "laravel",
         "thumbnails",
@@ -8,6 +9,10 @@
         "on-demand",
         "lazy",
         "context-aware",
+        "smart-crop",
+        "avif",
+        "webp",
+        "variants",
         "organized",
         "intervention",
         "gd",

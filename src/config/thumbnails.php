@@ -89,6 +89,62 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Subdirectory Strategies
+    |--------------------------------------------------------------------------
+    |
+    | Choose how thumbnails are organized in subdirectories:
+    | - auto_strategy: true = automatically selects best strategy
+    |   * With model context → Context-Aware (semantic organization)
+    |   * Without context (string path) → Hash Prefix (performance)
+    | 
+    | - auto_strategy: false = use manual_strategy
+    |
+    | Strategies available:
+    | - 'context-aware' - Organize by user/post/album (our unique feature!)
+    | - 'hash-prefix' - a/b/ subdirs for performance (1M+ files)
+    | - 'date-based' - 2026/01/03/ subdirs by date
+    | - 'hash-levels' - ab/cd/ef/ multi-level hash
+    |
+    */
+
+    'subdirectory' => [
+        // Auto-detect: Context-Aware when model, Hash when string path
+        'auto_strategy' => env('THUMBNAILS_AUTO_STRATEGY', true),
+        
+        // Manual override (when auto_strategy = false)
+        'manual_strategy' => env('THUMBNAILS_STRATEGY', 'context-aware'),
+        
+        'strategies' => [
+            'context-aware' => [
+                'enabled' => true,
+                'priority' => 100, // Highest priority when model provided
+            ],
+            
+            'hash-prefix' => [
+                'enabled' => true,
+                'length' => 2,  // First 2 chars of hash
+                'depth' => 2,   // Two levels (a/b/)
+                'priority' => 1, // Lowest = fallback when no context
+                'base_dir' => 'thumbnails',
+            ],
+            
+            'date-based' => [
+                'enabled' => false,
+                'format' => 'Y/m/d', // 2026/01/03
+                'priority' => 50,
+            ],
+            
+            'hash-levels' => [
+                'enabled' => false,
+                'levels' => 3,  // ab/cd/ef/
+                'chars_per_level' => 2,
+                'priority' => 25,
+            ],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Resize Method
     |--------------------------------------------------------------------------
     |
@@ -96,10 +152,60 @@ return [
     | - 'resize' = Proportional resize (preserves aspect ratio, may not be exact size)
     | - 'crop' = Center crop to exact size (fills entire thumbnail, may cut edges)
     | - 'fit' = Fit inside bounds (preserves entire image, adds padding if needed)
+    | - 'smart-crop' = Intelligent cropping based on content (requires smart_crop enabled)
     |
     */
 
     'method' => env('THUMBNAILS_METHOD', 'resize'),
+    
+    /*
+    |--------------------------------------------------------------------------
+    | Smart Crop Algorithm
+    |--------------------------------------------------------------------------
+    |
+    | Intelligent cropping that automatically finds the most important part
+    | of an image using energy detection (edge detection) or face detection.
+    |
+    | - enabled: Enable smart crop feature
+    | - algorithm: 'energy' = edge detection (default), 'faces' = face detection (Imagick)
+    | - rule_of_thirds: Align focal point with rule of thirds grid
+    |
+    | Use method='smart-crop' to enable for specific thumbnails.
+    |
+    */
+
+    'smart_crop' => [
+        'enabled' => env('THUMBNAILS_SMART_CROP', true),
+        'algorithm' => env('THUMBNAILS_SMART_CROP_ALGORITHM', 'energy'),
+        'rule_of_thirds' => true,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Modern Image Formats (AVIF/WebP)
+    |--------------------------------------------------------------------------
+    |
+    | Automatically convert thumbnails to modern formats for better performance.
+    | AVIF: ~50% smaller than JPEG, WebP: ~30% smaller
+    |
+    | - auto_convert: Automatically use best available format
+    | - priority: Try formats in order (first available wins)
+    | - quality: Quality settings per format (1-100)
+    | - fallback: Format to use if modern formats unavailable
+    |
+    */
+
+    'formats' => [
+        'auto_convert' => env('THUMBNAILS_AUTO_CONVERT', true),
+        'priority' => ['avif', 'webp', 'jpg'], // Try in order
+        'quality' => [
+            'avif' => 85,
+            'webp' => 90,
+            'jpg' => 85,
+            'png' => 90,
+        ],
+        'fallback' => 'jpg',
+    ],
 
     /*
     |--------------------------------------------------------------------------
@@ -114,6 +220,123 @@ return [
     */
 
     'driver' => env('THUMBNAILS_DRIVER', 'gd'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Fallback on Error
+    |--------------------------------------------------------------------------
+    |
+    | If thumbnail generation fails, return the original image URL instead
+    | of throwing an exception. Recommended: true for production.
+    |
+    */
+
+    'fallback_on_error' => env('THUMBNAILS_FALLBACK', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Variants System
+    |--------------------------------------------------------------------------
+    |
+    | Define preset collections of thumbnail sizes (variants).
+    | Generate multiple sizes at once for common use cases.
+    |
+    | Example: thumbnail_variant($post, 'image.jpg', 'avatar')
+    | Generates all 3 avatar sizes in one call.
+    |
+    */
+
+    'variants' => [
+        'avatar' => [
+            ['width' => 32, 'height' => 32, 'method' => 'crop'],
+            ['width' => 64, 'height' => 64, 'method' => 'crop'],
+            ['width' => 128, 'height' => 128, 'method' => 'crop'],
+        ],
+        'gallery' => [
+            ['width' => 300, 'height' => 200, 'method' => 'crop'],
+            ['width' => 800, 'height' => 600, 'method' => 'resize'],
+            ['width' => 1920, 'height' => 1080, 'method' => 'fit'],
+        ],
+        'post_images' => [
+            ['width' => 600, 'height' => 400, 'method' => 'fit'],
+            ['width' => 1200, 'height' => 800, 'method' => 'fit'],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Error Handling Mode
+    |--------------------------------------------------------------------------
+    |
+    | How to handle thumbnail generation errors:
+    | - 'silent': Log error, return original image (production-friendly)
+    | - 'strict': Throw exceptions (development/debugging)
+    | - 'fallback': Return placeholder image
+    |
+    */
+
+    'error_mode' => env('THUMBNAILS_ERROR_MODE', 'silent'),
+
+    'error_modes' => [
+        'silent' => [
+            'return_original' => true,
+            'log_errors' => true,
+        ],
+        'strict' => [
+            'throw_exceptions' => true,
+        ],
+        'fallback' => [
+            'placeholder_path' => 'placeholders/no-image.jpg',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Statistics Tracking (Optional)
+    |--------------------------------------------------------------------------
+    |
+    | Track thumbnail generation statistics for monitoring and analytics.
+    | 
+    | IMPORTANT: Database tracking is DISABLED by default (zero setup!).
+    | To enable: php artisan vendor:publish --tag=thumbnails-statistics
+    |           php artisan migrate
+    |           Set THUMBNAILS_STATISTICS_ENABLED=true
+    |
+    | Alternative: File-based logging (always available)
+    |
+    */
+
+    'statistics' => [
+        'enabled' => env('THUMBNAILS_STATISTICS_ENABLED', false),
+        'log_to_file' => env('THUMBNAILS_STATS_LOG', true),
+        'log_file' => 'thumbnails-stats.log',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Security Validation
+    |--------------------------------------------------------------------------
+    |
+    | Validate images before processing for security and performance.
+    |
+    */
+
+    'security' => [
+        'max_file_size' => env('THUMBNAILS_MAX_SIZE', 10) * 1024 * 1024, // 10MB
+        'allowed_extensions' => ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'],
+        'allowed_mime_types' => [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+            'image/avif',
+        ],
+        'max_dimensions' => [
+            'width' => 10000,
+            'height' => 10000,
+        ],
+        'block_svg' => true, // Prevent XXE attacks
+    ],
 
     /*
     |--------------------------------------------------------------------------
