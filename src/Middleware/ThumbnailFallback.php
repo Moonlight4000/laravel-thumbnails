@@ -120,6 +120,7 @@ class ThumbnailFallback
                     
                     // Extract path from URL
                     $thumbnailPath = str_replace([asset('storage/'), '/storage/'], '', $thumbnailUrl);
+                    $thumbnailPath = ltrim($thumbnailPath, '/'); // Remove leading slash
                     
                     // Verify thumbnail was generated
                     if (!Storage::disk($disk)->exists($thumbnailPath)) {
