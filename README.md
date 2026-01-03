@@ -1,12 +1,13 @@
-# 🖼️ Laravel Context-Aware Thumbnails™
+# 🖼️ Laravel Smart Thumbnails™
+### Context-Aware On-Demand Image Thumbnails
 
 > **Copyright © 2024-2026 Moonlight Poland. All rights reserved.**  
 > **Contact:** kontakt@howtodraw.pl  
 > **License:** [Commercial License](LICENSE.md) - Free for personal use, paid for commercial use  
 > **Repository:** https://github.com/Moonlight4000/laravel-thumbnails
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/moonlight-poland/laravel-thumbnails.svg?style=flat-square)](https://packagist.org/packages/moonlight-poland/laravel-thumbnails)
-[![Total Downloads](https://img.shields.io/packagist/dt/moonlight-poland/laravel-thumbnails.svg?style=flat-square)](https://packagist.org/packages/moonlight-poland/laravel-thumbnails)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/moonlight-poland/laravel-smart-thumbnails.svg?style=flat-square)](https://packagist.org/packages/moonlight-poland/laravel-smart-thumbnails)
+[![Total Downloads](https://img.shields.io/packagist/dt/moonlight-poland/laravel-smart-thumbnails.svg?style=flat-square)](https://packagist.org/packages/moonlight-poland/laravel-smart-thumbnails)
 [![License: Commercial](https://img.shields.io/badge/License-Commercial-blue.svg)](LICENSE.md)
 
 Generate image thumbnails on-the-fly in Laravel with **Context-Aware Thumbnails™** - the only package that organizes thumbnails exactly where your content lives!
@@ -17,7 +18,7 @@ Generate image thumbnails on-the-fly in Laravel with **Context-Aware Thumbnails�
 
 ## 🏆 Why Choose This Over Other Packages?
 
-| Feature | **moonlight-poland/laravel-thumbnails** | lee-to/laravel-thumbnails | spatie/laravel-medialibrary |
+| Feature | **moonlight-poland/laravel-smart-thumbnails** | lee-to/laravel-thumbnails | spatie/laravel-medialibrary |
 |---------|----------------------------------------|---------------------------|------------------------------|
 | **Context-Aware Thumbnails™** | ✅ **UNIQUE!** Organize by user/post/album | ❌ Everything in one folder | ❌ Only via database |
 | **Custom path templates** | ✅ Full control with placeholders | ❌ No | ⚠️ Limited |
@@ -103,7 +104,7 @@ See [LICENSE.md](LICENSE.md) for details.
 ## 📦 Installation
 
 ```bash
-composer require moonlight-poland/laravel-thumbnails
+composer require moonlight-poland/laravel-smart-thumbnails
 ```
 
 ### License Activation

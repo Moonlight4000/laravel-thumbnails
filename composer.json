@@ -1,6 +1,6 @@
 {
-    "name": "moonlight-poland/laravel-thumbnails",
-    "description": "Generate image thumbnails on-demand in Laravel with Context-Aware Thumbnails™ - organize thumbnails by user/post/album. Zero config, filesystem-cached, blazing fast. The only Laravel package with intelligent path organization!",
+    "name": "moonlight-poland/laravel-smart-thumbnails",
+    "description": "Smart on-demand thumbnail generation for Laravel with Context-Aware organization - automatically organize thumbnails by user/post/album. Zero config, filesystem-cached, blazing fast. The only Laravel package with intelligent path organization!",
     "keywords": [
         "laravel",
         "thumbnails",
