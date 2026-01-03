@@ -35,6 +35,10 @@
         "illuminate/filesystem": "^10.0|^11.0|^12.0",
         "ext-gd": "*"
     },
+    "suggest": {
+        "intervention/image": "Required for advanced image manipulation, Smart Crop, and better performance (recommended)",
+        "ext-imagick": "Required for Imagick driver support and AVIF format generation (optional)"
+    },
     "require-dev": {
         "phpunit/phpunit": "^10.0|^11.0",
         "orchestra/testbench": "^8.0|^9.0",

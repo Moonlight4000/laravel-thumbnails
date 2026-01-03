@@ -193,6 +193,24 @@ See [LICENSE.md](LICENSE.md) for details.
 composer require moonlight-poland/laravel-smart-thumbnails
 ```
 
+### Optional Dependencies (Recommended)
+
+For best performance and advanced features, install these optional packages:
+
+```bash
+# Intervention Image - Required for Smart Crop and better performance
+composer require intervention/image
+
+# Imagick Extension - Required for AVIF format support
+# (Install via your system's package manager, e.g., apt install php-imagick)
+```
+
+**What you get with optional dependencies:**
+- ✅ **Smart Crop** - AI-powered energy detection (requires Intervention Image)
+- ✅ **AVIF format** - Modern image format with 50% smaller files (requires ext-imagick)
+- ✅ **Better performance** - Intervention Image is faster than GD for large images
+- ⚠️ **Without them** - Package falls back to GD (works, but limited features)
+
 ### License Activation
 
 **For Personal (Free) use:**
