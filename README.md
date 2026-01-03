@@ -18,28 +18,99 @@ Generate image thumbnails on-the-fly in Laravel with **Context-Aware Thumbnails�
 
 ## 🏆 Why Choose This Over Other Packages?
 
-| Feature | **moonlight-poland/laravel-smart-thumbnails** | lee-to/laravel-thumbnails | spatie/laravel-medialibrary |
-|---------|----------------------------------------|---------------------------|------------------------------|
-| **Context-Aware Thumbnails™** | ✅ **UNIQUE!** Organize by user/post/album | ❌ Everything in one folder | ❌ Only via database |
-| **Custom path templates** | ✅ Full control with placeholders | ❌ No | ⚠️ Limited |
-| **On-demand generation** | ✅ Automatic (middleware) | ✅ Manual | ✅ Manual |
-| **Crop/Fit/Resize methods** | ✅ 3 methods | ✅ 3 methods | ✅ Yes |
-| **Zero config** | ✅ Works out-of-box | ⚠️ Requires setup | ⚠️ Complex setup |
-| **Blade directive** | ✅ `@thumbnail()` | ❌ No | ❌ No |
-| **Multiple drivers** | ✅ GD/Imagick/Intervention | ⚠️ Intervention only | ✅ Yes |
-| **Artisan commands** | ✅ Yes | ❌ No | ✅ Yes |
-| **Middleware fallback** | ✅ Auto-generate on 404 | ❌ No | ❌ No |
-| **HasThumbnails trait** | ✅ Yes | ✅ Yes | ✅ Yes |
-| **Per-user isolation** | ✅ Built-in via contexts | ❌ Manual only | ⚠️ Via database |
-| **Easy cleanup** | ✅ Delete folder = done | ⚠️ Manual file cleanup | ✅ Via database |
-| **Commercial support** | ✅ Tiered licensing | ❌ No | ✅ Yes (Spatie) |
-| **Database storage** | ❌ Filesystem only | ❌ Filesystem only | ✅ Yes |
+### 📊 Complete Feature Comparison
 
-**Best for:** Laravel apps that need **fast, automatic, organized thumbnails** without database overhead.
+| Feature | **Laravel Smart Thumbnails™<br>(moonlight-poland)** | **askancy/<br>laravel-smart-thumbnails** | **lee-to/<br>laravel-thumbnails** | **spatie/<br>laravel-medialibrary** |
+|---------|:---:|:---:|:---:|:---:|
+| **🎯 UNIQUE FEATURES** |
+| **Context-Aware Organization™** | ✅ **ONLY US!** | ❌ | ❌ | ❌ |
+| Custom path templates | ✅ `{user_id}/{post_id}` | ❌ | ❌ | ⚠️ Limited |
+| Per-user/post isolation | ✅ Built-in | ❌ Manual | ❌ Manual | ⚠️ Via DB |
+| Commercial licensing | ✅ $500-$15k | ❌ MIT (free) | ❌ MIT | ✅ Spatie |
+| **🖼️ IMAGE PROCESSING** |
+| AVIF format support | 🔜 **v2.0** | ✅ | ❌ | ✅ |
+| WebP format support | 🔜 **v2.0** | ✅ | ❌ | ✅ |
+| Smart Crop (AI energy) | 🔜 **v2.0** | ✅ | ❌ | ✅ |
+| Crop/Fit/Resize methods | ✅ All 3 | ✅ SmartCrop | ✅ All 3 | ✅ Yes |
+| Multiple drivers | ✅ GD/Imagick/Intervention | ✅ GD/Imagick | ⚠️ Intervention only | ✅ Yes |
+| Quality control | ✅ Per size | ✅ Per variant | ✅ Global | ✅ Yes |
+| **🛡️ ERROR HANDLING** |
+| Silent/Strict modes | 🔜 **v2.0** | ✅ | ❌ | ⚠️ Limited |
+| Bulletproof fallbacks | ✅ | ✅ | ⚠️ Basic | ✅ |
+| Never breaks app | ✅ | ✅ | ⚠️ Can throw | ✅ |
+| **⚡ GENERATION** |
+| On-demand (lazy) | ✅ Automatic | ✅ Automatic | ✅ Manual | ✅ Manual |
+| Middleware fallback | ✅ Auto 404→generate | ❌ | ❌ | ❌ |
+| Zero config | ✅ Works out-of-box | ⚠️ Requires setup | ⚠️ Setup needed | ❌ Complex |
+| **📁 ORGANIZATION** |
+| Subdirectory strategies | ✅ Context-aware | ✅ 5 strategies | ❌ Flat | ⚠️ Via DB |
+| Hash-based distribution | ⚠️ Manual | ✅ Automatic | ❌ | ❌ |
+| Date-based folders | ⚠️ Manual | ✅ Automatic | ❌ | ❌ |
+| Handles millions of files | ✅ Yes | ✅ Yes | ⚠️ Slow | ✅ Yes |
+| **🎨 VARIANTS & PRESETS** |
+| Multiple sizes per preset | ✅ | ✅ Variants | ✅ | ✅ |
+| Responsive images | ✅ | ✅ | ✅ | ✅ |
+| Named presets | ✅ `'small'`, `'large'` | ✅ | ✅ | ✅ |
+| **🔧 DEVELOPER EXPERIENCE** |
+| Blade directive | ✅ `@thumbnail()` | ❌ | ❌ | ❌ |
+| Helper function | ✅ `thumbnail()` | ❌ | ✅ | ❌ |
+| Eloquent trait | ✅ `HasThumbnails` | ❌ | ✅ | ✅ |
+| Artisan commands | ✅ generate, clear | ✅ purge, optimize | ❌ | ✅ Many |
+| **📊 MONITORING** |
+| Statistics & analytics | 🔜 **v2.0** | ✅ Full | ❌ | ✅ |
+| Performance metrics | 🔜 **v2.0** | ✅ | ❌ | ⚠️ |
+| Disk usage tracking | 🔜 **v2.0** | ✅ | ❌ | ✅ |
+| **🔒 SECURITY** |
+| File validation | 🔜 **v2.0** | ✅ | ⚠️ Basic | ✅ |
+| Size limits | 🔜 **v2.0** | ✅ | ❌ | ✅ |
+| Extension whitelist | 🔜 **v2.0** | ✅ | ❌ | ✅ |
+| Tamper detection | ✅ Commercial only | ❌ | ❌ | ❌ |
+| **💾 STORAGE** |
+| Filesystem cache | ✅ | ✅ | ✅ | ✅ |
+| Redis/Memcached tags | ❌ | ✅ | ❌ | ⚠️ |
+| Multi-disk support | ✅ | ✅ | ✅ | ✅ |
+| S3/Cloud storage | ✅ | ✅ | ✅ | ✅ |
+| Database storage | ❌ | ❌ | ❌ | ✅ |
+| **📦 INSTALLATION** |
+| Installs | 🆕 New | 17 | ~500 | 50,000+ |
+| Stars | ⭐ New | 1 | ~50 | 5,000+ |
+| Maturity | 🆕 v1.1 | 🆕 v2.0 | ⚠️ v1.x | ✅ v11.x |
 
-**When to use Spatie:** When you need database storage, file conversions, and full media library management.
+### 🎯 Which Package Should You Choose?
 
-### 🔥 What Makes Context-Aware Thumbnails™ Special?
+#### Choose **Laravel Smart Thumbnails™ (moonlight-poland)** if you need:
+- ✅ **Context-Aware organization** (unique feature!)
+- ✅ Thumbnails organized by user/post/album automatically
+- ✅ Blade directives and helpers for easy use
+- ✅ Automatic middleware fallback
+- ✅ Commercial support with licensing
+- ✅ Simple filesystem-based solution
+- ✅ **Coming in v2.0:** AVIF, WebP, Smart Crop, Statistics
+
+#### Choose **askancy/laravel-smart-thumbnails** if you need:
+- ✅ Advanced smart crop algorithm (energy detection) - **NOW**
+- ✅ AVIF/WebP support - **NOW**
+- ✅ Extensive statistics and monitoring - **NOW**
+- ✅ Hash-based subdirectory strategies
+- ✅ Silent/Strict error modes
+- ❌ BUT: No context-aware organization
+
+#### Choose **lee-to/laravel-thumbnails** if you need:
+- ✅ Simple, basic thumbnail generation
+- ✅ Russian community support
+- ❌ Limited features compared to others
+
+#### Choose **spatie/laravel-medialibrary** if you need:
+- ✅ Full media library management
+- ✅ Database storage for metadata
+- ✅ File conversions beyond images
+- ✅ Battle-tested (50k+ installs)
+- ❌ More complex setup
+- ❌ Requires database for everything
+
+---
+
+## 🔥 What Makes Context-Aware Thumbnails™ Special?
 
 **Other packages dump all thumbnails in one folder. We organize them exactly where your content lives:**
 
