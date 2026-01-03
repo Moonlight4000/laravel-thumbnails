@@ -434,18 +434,62 @@ import {
 const url = getThumbnailUrl('user-posts/1/12/img.jpg', 'small');
 // → /storage/user-posts/1/12/thumbnails/img_thumb_small.jpg
 
+// With crop method + WebP format
+const url = getThumbnailUrl('user-posts/1/12/img.jpg', 'small', { 
+    method: 'crop',      // crop, fit, or resize
+    format: 'webp',      // webp, avif, jpg, png
+    quality: 85,         // 1-100
+    smart_crop: true     // AI energy detection (v2.0+)
+});
+// → /storage/user-posts/1/12/thumbnails/img_thumb_small_crop.webp?quality=85&smart_crop=1
+
 // Context-Aware (filename + context + data)
 const url = getThumbnailUrlWithContext(
     'img.jpg',              // Just filename
     'small',                // Size
     'post',                 // Context
-    { user_id: 1, post_id: 12 }  // Context data
+    { user_id: 1, post_id: 12 },  // Context data
+    { method: 'crop', format: 'webp' }  // Options (optional)
 );
-// → /storage/user-posts/1/12/thumbnails/img_thumb_small.jpg
+// → /storage/user-posts/1/12/thumbnails/img_thumb_small_crop.webp
 
 // Build context path only
 const path = buildContextPath('post', { user_id: 1, post_id: 12 });
 // → user-posts/1/12
+```
+
+### ✅ Full Feature Parity with PHP
+
+JavaScript helper supports **ALL** PHP features:
+- ✅ **Context-Aware paths** - Organized by user/post/album
+- ✅ **Resize methods** - `crop`, `fit`, `resize`
+- ✅ **Modern formats** - `webp`, `avif`, `jpg`, `png`
+- ✅ **Quality control** - 1-100
+- ✅ **Smart Crop** - AI energy detection (v2.0+)
+- ✅ **On-demand generation** - Middleware handles 404
+
+**Example with all options:**
+
+```jsx
+// React Component with Smart Crop + WebP
+function PostMedia({ post }) {
+    return (
+        <div>
+            {post.media_files.map((media, idx) => (
+                <img 
+                    key={idx}
+                    src={getThumbnailUrl(media.path, 'medium', {
+                        method: 'crop',
+                        format: 'webp',
+                        quality: 90,
+                        smart_crop: true  // AI focuses on important areas!
+                    })}
+                    alt={media.alt}
+                />
+            ))}
+        </div>
+    );
+}
 ```
 
 ### PHP Backend Setup for React

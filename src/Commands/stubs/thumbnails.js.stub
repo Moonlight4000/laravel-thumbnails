@@ -59,14 +59,21 @@ export function buildContextPath(context, contextData = {}) {
  * 
  * @param {string} path - Image path (e.g., 'user-posts/1/12/img.jpg')
  * @param {string} size - Thumbnail size (small, medium, large, etc.)
+ * @param {Object} options - Additional options (method, format, quality, smart_crop)
  * @returns {string} - Thumbnail URL
  * 
  * @example
  * getThumbnailUrl('user-posts/1/12/img.jpg', 'small')
  * // Returns: '/storage/user-posts/1/12/thumbnails/img_thumb_small.jpg'
+ * 
+ * @example
+ * getThumbnailUrl('user-posts/1/12/img.jpg', 'small', { method: 'crop', format: 'webp' })
+ * // Returns: '/storage/user-posts/1/12/thumbnails/img_thumb_small_crop.webp'
  */
-export function getThumbnailUrl(path, size = 'small') {
+export function getThumbnailUrl(path, size = 'small', options = {}) {
     if (!path) return null;
+    
+    const { method = null, format = null, quality = null, smart_crop = false } = options;
     
     // Parse path: user-posts/1/12/img.jpg → directory + filename + extension
     const match = path.match(/^(.+)\/([^/]+)\.([^.]+)$/);
@@ -74,14 +81,28 @@ export function getThumbnailUrl(path, size = 'small') {
     
     const [, directory, basename, extension] = match;
     
-    // Build thumbnail URL according to pattern
-    // Pattern: {name}_thumb_{size}.{ext}
-    const thumbnailFilename = FILENAME_PATTERN
+    // Determine output extension
+    const outputExt = format || extension;
+    
+    // Build thumbnail filename with optional method suffix
+    let thumbnailName = FILENAME_PATTERN
         .replace('{name}', basename)
         .replace('{size}', size)
-        .replace('{ext}', extension);
+        .replace('{ext}', outputExt);
     
-    return `/storage/${directory}/${CACHE_FOLDER}/${thumbnailFilename}`;
+    // Add method suffix if specified (e.g., img_thumb_small_crop.jpg)
+    if (method) {
+        thumbnailName = thumbnailName.replace(`.${outputExt}`, `_${method}.${outputExt}`);
+    }
+    
+    // Build query string for additional options
+    const queryParams = [];
+    if (quality) queryParams.push(`quality=${quality}`);
+    if (smart_crop) queryParams.push(`smart_crop=1`);
+    
+    const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
+    
+    return `/storage/${directory}/${CACHE_FOLDER}/${thumbnailName}${queryString}`;
 }
 
 /**
@@ -91,14 +112,21 @@ export function getThumbnailUrl(path, size = 'small') {
  * @param {string} size - Thumbnail size
  * @param {string} context - Context name (e.g., 'post', 'gallery')
  * @param {Object} contextData - Context variables
+ * @param {Object} options - Additional options (method, format, quality, smart_crop)
  * @returns {string} - Thumbnail URL
  * 
  * @example
  * getThumbnailUrlWithContext('img.jpg', 'small', 'post', {user_id: 1, post_id: 12})
  * // Returns: '/storage/user-posts/1/12/thumbnails/img_thumb_small.jpg'
+ * 
+ * @example
+ * getThumbnailUrlWithContext('img.jpg', 'small', 'post', {user_id: 1, post_id: 12}, { method: 'crop', format: 'webp' })
+ * // Returns: '/storage/user-posts/1/12/thumbnails/img_thumb_small_crop.webp'
  */
-export function getThumbnailUrlWithContext(filename, size = 'small', context = null, contextData = {}) {
+export function getThumbnailUrlWithContext(filename, size = 'small', context = null, contextData = {}, options = {}) {
     if (!filename) return null;
+    
+    const { method = null, format = null, quality = null, smart_crop = false } = options;
     
     // Build context path if provided
     let basePath = '';
@@ -115,13 +143,28 @@ export function getThumbnailUrlWithContext(filename, size = 'small', context = n
     
     const [, basename, extension] = match;
     
-    // Build thumbnail URL
-    const thumbnailFilename = FILENAME_PATTERN
+    // Determine output extension
+    const outputExt = format || extension;
+    
+    // Build thumbnail filename
+    let thumbnailName = FILENAME_PATTERN
         .replace('{name}', basename)
         .replace('{size}', size)
-        .replace('{ext}', extension);
+        .replace('{ext}', outputExt);
     
-    return `/storage/${basePath}${CACHE_FOLDER}/${thumbnailFilename}`;
+    // Add method suffix if specified
+    if (method) {
+        thumbnailName = thumbnailName.replace(`.${outputExt}`, `_${method}.${outputExt}`);
+    }
+    
+    // Build query string for additional options
+    const queryParams = [];
+    if (quality) queryParams.push(`quality=${quality}`);
+    if (smart_crop) queryParams.push(`smart_crop=1`);
+    
+    const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
+    
+    return `/storage/${basePath}${CACHE_FOLDER}/${thumbnailName}${queryString}`;
 }
 
 /**
