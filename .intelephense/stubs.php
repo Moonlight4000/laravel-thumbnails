@@ -91,33 +91,33 @@ namespace {
              * @param bool $fill
              * @return bool
              */
-            public function thumbnailImage($width, $height, $bestfit = false, $fill = false): bool {}
+            public function thumbnailImage($width, $height, $bestfit = false, $fill = false): bool { return true; }
             
             /**
              * Set compression quality
              * @param int $quality
              * @return bool
              */
-            public function setImageCompressionQuality($quality): bool {}
+            public function setImageCompressionQuality($quality): bool { return true; }
             
             /**
              * Write image to file
              * @param string $filename
              * @return bool
              */
-            public function writeImage($filename): bool {}
+            public function writeImage($filename): bool { return true; }
             
             /**
              * Clear resources
              * @return bool
              */
-            public function clear(): bool {}
+            public function clear(): bool { return true; }
             
             /**
              * Destroy object
              * @return bool
              */
-            public function destroy(): bool {}
+            public function destroy(): bool { return true; }
             
             /**
              * Resize image
@@ -127,7 +127,7 @@ namespace {
              * @param float $blur
              * @return bool
              */
-            public function resizeImage($width, $height, $filter, $blur): bool {}
+            public function resizeImage($width, $height, $filter, $blur): bool { return true; }
             
             /**
              * Crop image
@@ -137,8 +137,9 @@ namespace {
              * @param int $y
              * @return bool
              */
-            public function cropImage($width, $height, $x, $y): bool {}
+            public function cropImage($width, $height, $x, $y): bool { return true; }
         }
     }
 }
+
 
