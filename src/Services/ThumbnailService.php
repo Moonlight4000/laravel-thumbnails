@@ -188,8 +188,7 @@ class ThumbnailService
         string $size = 'small', 
         bool $returnUrl = true,
         ?string $context = null,
-        array $contextData = [],
-        bool $generateOnDemand = false
+        array $contextData = []
     ): ?string
     {
         // CHECK IMAGE LIBRARIES (non-intrusive, logs critical issues only)
@@ -273,13 +272,7 @@ class ThumbnailService
             return $returnUrl ? asset("storage/{$thumbnailPath}") : $thumbnailPath;
         }
         
-        // 🔥 GENERATE ON DEMAND FLAG
-        // If false, return URL only (middleware will generate on 404)
-        if (!$generateOnDemand) {
-            return $returnUrl ? asset("storage/{$thumbnailPath}") : $thumbnailPath;
-        }
-        
-        // 🔨 CACHE MISS - generate thumbnail NOW (only if $generateOnDemand = true)
+        // 🔨 CACHE MISS - generate thumbnail NOW (ON-DEMAND)
         // Proprietary algorithm © 2024-2026 Moonlight Poland
         try {
             $dimensions = $this->getSize($size);

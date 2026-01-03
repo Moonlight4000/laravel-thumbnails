@@ -30,12 +30,11 @@ if (!function_exists('thumbnail')) {
         string $size = 'small', 
         bool $returnUrl = true,
         ?string $context = null,
-        array $contextData = [],
-        bool $generateOnDemand = false
+        array $contextData = []
     ): ?string
     {
         return app('Moonlight\Thumbnails\Services\ThumbnailService')
-            ->thumbnail($imagePath, $size, $returnUrl, $context, $contextData, $generateOnDemand);
+            ->thumbnail($imagePath, $size, $returnUrl, $context, $contextData);
     }
 }
 
