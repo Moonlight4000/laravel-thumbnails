@@ -60,6 +60,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Resize Method
+    |--------------------------------------------------------------------------
+    |
+    | How to resize images. Options:
+    | - 'resize' = Proportional resize (preserves aspect ratio, may not be exact size)
+    | - 'crop' = Center crop to exact size (fills entire thumbnail, may cut edges)
+    | - 'fit' = Fit inside bounds (preserves entire image, adds padding if needed)
+    |
+    */
+
+    'method' => env('THUMBNAILS_METHOD', 'resize'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Image Driver
     |--------------------------------------------------------------------------
     |

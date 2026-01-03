@@ -1,12 +1,34 @@
 # 🖼️ Laravel On-Demand Thumbnails
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/moonlight/laravel-thumbnails.svg?style=flat-square)](https://packagist.org/packages/moonlight/laravel-thumbnails)
-[![Total Downloads](https://img.shields.io/packagist/dt/moonlight/laravel-thumbnails.svg?style=flat-square)](https://packagist.org/packages/moonlight/laravel-thumbnails)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/moonlight-poland/laravel-thumbnails.svg?style=flat-square)](https://packagist.org/packages/moonlight-poland/laravel-thumbnails)
+[![Total Downloads](https://img.shields.io/packagist/dt/moonlight-poland/laravel-thumbnails.svg?style=flat-square)](https://packagist.org/packages/moonlight-poland/laravel-thumbnails)
 [![License: Commercial](https://img.shields.io/badge/License-Commercial-blue.svg)](LICENSE.md)
 
 Generate image thumbnails on-the-fly in Laravel, just like **Symfony's LiipImagineBundle**.
 
 **No pre-generation needed. No Redis required. Just works.™**
+
+---
+
+## 🏆 Why Choose This Over Other Packages?
+
+| Feature | **moonlight-poland/laravel-thumbnails** | lee-to/laravel-thumbnails | spatie/laravel-medialibrary |
+|---------|----------------------------------------|---------------------------|------------------------------|
+| **On-demand generation** | ✅ Automatic (middleware) | ✅ Manual | ✅ Manual |
+| **Crop/Fit/Resize methods** | ✅ 3 methods | ✅ 3 methods | ✅ Yes |
+| **Zero config** | ✅ Works out-of-box | ⚠️ Requires setup | ⚠️ Complex setup |
+| **Blade directive** | ✅ `@thumbnail()` | ❌ No | ❌ No |
+| **Multiple drivers** | ✅ GD/Imagick/Intervention | ⚠️ Intervention only | ✅ Yes |
+| **Artisan commands** | ✅ Yes | ❌ No | ✅ Yes |
+| **Middleware fallback** | ✅ Auto-generate on 404 | ❌ No | ❌ No |
+| **HasThumbnails trait** | ✅ Yes | ✅ Yes | ✅ Yes |
+| **Commercial support** | ✅ Tiered licensing | ❌ No | ✅ Yes (Spatie) |
+| **Database storage** | ❌ Filesystem only | ❌ Filesystem only | ✅ Yes |
+| **File conversions** | ❌ No | ❌ No | ✅ Yes |
+
+**Best for:** Laravel apps that need **fast, automatic thumbnails** without database overhead.
+
+**When to use Spatie:** When you need database storage, file conversions, and full media library management.
 
 ---
 
@@ -29,6 +51,7 @@ See [LICENSE.md](LICENSE.md) for details.
 - 💾 **Filesystem Cache** - Fast subsequent loads, no Redis/Memcached needed
 - 🔌 **Zero Configuration** - Sensible defaults, works out of the box
 - 🎨 **Multiple Drivers** - GD (default), Imagick, or Intervention Image
+- 📐 **3 Resize Methods** - Resize (proportional), Crop (exact size), Fit (with padding)
 - 🔧 **Fully Configurable** - Custom sizes, quality, drivers, and more
 - 🎯 **Blade Directive** - `@thumbnail('path/image.jpg', 'small')`
 - 📦 **Facade & Helpers** - Multiple ways to use
@@ -42,7 +65,7 @@ See [LICENSE.md](LICENSE.md) for details.
 ## 📦 Installation
 
 ```bash
-composer require moonlight/laravel-thumbnails
+composer require moonlight-poland/laravel-thumbnails
 ```
 
 ### License Activation
@@ -90,6 +113,55 @@ php artisan storage:link
 
 - **First request**: Generates thumbnail (~50-200ms)
 - **Next requests**: Cached file served by Nginx (~1-5ms)
+
+---
+
+## 📐 Resize Methods
+
+Choose how thumbnails should be generated:
+
+### 1. **Resize** (Default - Proportional)
+```php
+// config/thumbnails.php
+'method' => 'resize',
+```
+- ✅ Preserves aspect ratio
+- ✅ No cropping
+- ⚠️ Final size may differ slightly from target
+
+**Use for:** Product images, photos where full content must be visible
+
+### 2. **Crop** (Exact Size - Center Crop)
+```php
+// config/thumbnails.php
+'method' => 'crop',
+```
+- ✅ Exact dimensions guaranteed
+- ✅ Fills entire thumbnail
+- ⚠️ May cut edges (center-focused)
+
+**Use for:** Avatars, thumbnails in grids, cards
+
+### 3. **Fit** (Preserve All - Add Padding)
+```php
+// config/thumbnails.php
+'method' => 'fit',
+```
+- ✅ Entire image visible
+- ✅ Exact dimensions
+- ⚠️ May have padding/borders
+
+**Use for:** Logos, icons, images where nothing can be cut
+
+**Visual comparison:**
+
+```
+Original: 800x600 → Target: 200x200
+
+RESIZE:  200x150 (proportional, smaller)
+CROP:    200x200 (center cropped)
+FIT:     200x200 (padded top/bottom)
+```
 
 ---
 

@@ -126,20 +126,12 @@ class ThumbnailService
     {
         $disk = Config::get('thumbnails.disk', 'public');
         $quality = Config::get('thumbnails.quality', 85);
+        $method = Config::get('thumbnails.method', 'resize');
         
         $imageInfo = getimagesize($sourcePath);
         $sourceWidth = $imageInfo[0];
         $sourceHeight = $imageInfo[1];
         $mimeType = $imageInfo['mime'];
-
-        // Calculate aspect ratio
-        $aspectRatio = $sourceWidth / $sourceHeight;
-        
-        if ($width / $height > $aspectRatio) {
-            $width = $height * $aspectRatio;
-        } else {
-            $height = $width / $aspectRatio;
-        }
 
         // Create source image
         $sourceImage = match ($mimeType) {
@@ -150,18 +142,20 @@ class ThumbnailService
             default => throw new \Exception("Unsupported image type: {$mimeType}"),
         };
 
-        // Create thumbnail
-        $thumbnail = imagecreatetruecolor((int)$width, (int)$height);
-        
-        // Preserve transparency for PNG and GIF
-        if ($mimeType === 'image/png' || $mimeType === 'image/gif') {
-            imagealphablending($thumbnail, false);
-            imagesavealpha($thumbnail, true);
-            $transparent = imagecolorallocatealpha($thumbnail, 255, 255, 255, 127);
-            imagefill($thumbnail, 0, 0, $transparent);
-        }
+        // Apply method-specific logic
+        [$thumbnail, $destWidth, $destHeight, $srcX, $srcY, $srcWidth, $srcHeight] = match ($method) {
+            'crop' => $this->calculateCrop($sourceImage, $sourceWidth, $sourceHeight, $width, $height, $mimeType),
+            'fit' => $this->calculateFit($sourceImage, $sourceWidth, $sourceHeight, $width, $height, $mimeType),
+            default => $this->calculateResize($sourceImage, $sourceWidth, $sourceHeight, $width, $height, $mimeType),
+        };
 
-        imagecopyresampled($thumbnail, $sourceImage, 0, 0, 0, 0, (int)$width, (int)$height, $sourceWidth, $sourceHeight);
+        // Copy and resample
+        imagecopyresampled(
+            $thumbnail, $sourceImage,
+            0, 0, $srcX, $srcY,
+            (int)$destWidth, (int)$destHeight,
+            (int)$srcWidth, (int)$srcHeight
+        );
 
         // Save thumbnail
         $fullThumbnailPath = Storage::disk($disk)->path($thumbnailPath);
@@ -177,6 +171,115 @@ class ThumbnailService
         // Clean up
         imagedestroy($sourceImage);
         imagedestroy($thumbnail);
+    }
+    
+    /**
+     * Calculate dimensions for RESIZE (proportional, aspect ratio preserved)
+     */
+    protected function calculateResize($sourceImage, int $sourceWidth, int $sourceHeight, int $width, int $height, string $mimeType): array
+    {
+        $aspectRatio = $sourceWidth / $sourceHeight;
+        
+        if ($width / $height > $aspectRatio) {
+            $width = $height * $aspectRatio;
+        } else {
+            $height = $width / $aspectRatio;
+        }
+        
+        $thumbnail = imagecreatetruecolor((int)$width, (int)$height);
+        $this->preserveTransparency($thumbnail, $mimeType);
+        
+        return [$thumbnail, $width, $height, 0, 0, $sourceWidth, $sourceHeight];
+    }
+    
+    /**
+     * Calculate dimensions for CROP (exact size, center crop)
+     */
+    protected function calculateCrop($sourceImage, int $sourceWidth, int $sourceHeight, int $width, int $height, string $mimeType): array
+    {
+        $sourceAspect = $sourceWidth / $sourceHeight;
+        $targetAspect = $width / $height;
+        
+        if ($sourceAspect > $targetAspect) {
+            // Source is wider - crop width
+            $srcHeight = $sourceHeight;
+            $srcWidth = $sourceHeight * $targetAspect;
+            $srcX = ($sourceWidth - $srcWidth) / 2;
+            $srcY = 0;
+        } else {
+            // Source is taller - crop height
+            $srcWidth = $sourceWidth;
+            $srcHeight = $sourceWidth / $targetAspect;
+            $srcX = 0;
+            $srcY = ($sourceHeight - $srcHeight) / 2;
+        }
+        
+        $thumbnail = imagecreatetruecolor($width, $height);
+        $this->preserveTransparency($thumbnail, $mimeType);
+        
+        return [$thumbnail, $width, $height, (int)$srcX, (int)$srcY, (int)$srcWidth, (int)$srcHeight];
+    }
+    
+    /**
+     * Calculate dimensions for FIT (fit inside bounds, preserve aspect ratio, add padding)
+     */
+    protected function calculateFit($sourceImage, int $sourceWidth, int $sourceHeight, int $width, int $height, string $mimeType): array
+    {
+        $aspectRatio = $sourceWidth / $sourceHeight;
+        $targetAspect = $width / $height;
+        
+        if ($aspectRatio > $targetAspect) {
+            // Fit to width
+            $destWidth = $width;
+            $destHeight = $width / $aspectRatio;
+        } else {
+            // Fit to height
+            $destHeight = $height;
+            $destWidth = $height * $aspectRatio;
+        }
+        
+        $thumbnail = imagecreatetruecolor($width, $height);
+        $this->preserveTransparency($thumbnail, $mimeType);
+        
+        // Fill background (white for JPEG, transparent for PNG/GIF)
+        if ($mimeType === 'image/jpeg') {
+            $white = imagecolorallocate($thumbnail, 255, 255, 255);
+            imagefill($thumbnail, 0, 0, $white);
+        }
+        
+        // Calculate padding to center the image
+        $offsetX = ($width - $destWidth) / 2;
+        $offsetY = ($height - $destHeight) / 2;
+        
+        // Return with offset positioning
+        $tempThumb = imagecreatetruecolor((int)$destWidth, (int)$destHeight);
+        $this->preserveTransparency($tempThumb, $mimeType);
+        
+        imagecopyresampled(
+            $tempThumb, $sourceImage,
+            0, 0, 0, 0,
+            (int)$destWidth, (int)$destHeight,
+            $sourceWidth, $sourceHeight
+        );
+        
+        imagecopy($thumbnail, $tempThumb, (int)$offsetX, (int)$offsetY, 0, 0, (int)$destWidth, (int)$destHeight);
+        imagedestroy($tempThumb);
+        
+        // Return dummy values since we already did the copy
+        return [$thumbnail, $width, $height, 0, 0, $width, $height];
+    }
+    
+    /**
+     * Preserve transparency for PNG and GIF
+     */
+    protected function preserveTransparency($image, string $mimeType): void
+    {
+        if ($mimeType === 'image/png' || $mimeType === 'image/gif') {
+            imagealphablending($image, false);
+            imagesavealpha($image, true);
+            $transparent = imagecolorallocatealpha($image, 255, 255, 255, 127);
+            imagefill($image, 0, 0, $transparent);
+        }
     }
     
     /**
