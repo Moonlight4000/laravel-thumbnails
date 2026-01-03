@@ -1,12 +1,14 @@
 {
     "name": "moonlight-poland/laravel-thumbnails",
-    "description": "Generate image thumbnails on-demand in Laravel, inspired by Symfony's LiipImagineBundle. Zero configuration, filesystem-cached, blazing fast.",
+    "description": "Generate image thumbnails on-demand in Laravel with Context-Aware Thumbnails™ - organize thumbnails by user/post/album. Zero config, filesystem-cached, blazing fast. The only Laravel package with intelligent path organization!",
     "keywords": [
         "laravel",
         "thumbnails",
         "images",
         "on-demand",
         "lazy",
+        "context-aware",
+        "organized",
         "intervention",
         "gd",
         "imagick",

@@ -1,4 +1,4 @@
-# 🖼️ Laravel On-Demand Thumbnails
+# 🖼️ Laravel Context-Aware Thumbnails™
 
 > **Copyright © 2024-2026 Moonlight Poland. All rights reserved.**  
 > **Contact:** kontakt@howtodraw.pl  
@@ -9,9 +9,9 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/moonlight-poland/laravel-thumbnails.svg?style=flat-square)](https://packagist.org/packages/moonlight-poland/laravel-thumbnails)
 [![License: Commercial](https://img.shields.io/badge/License-Commercial-blue.svg)](LICENSE.md)
 
-Generate image thumbnails on-the-fly in Laravel, just like **Symfony's LiipImagineBundle**.
+Generate image thumbnails on-the-fly in Laravel with **Context-Aware Thumbnails™** - the only package that organizes thumbnails exactly where your content lives!
 
-**No pre-generation needed. No Redis required. Just works.™**
+**No pre-generation needed. No Redis required. Smart organization included.™**
 
 ---
 
@@ -19,6 +19,8 @@ Generate image thumbnails on-the-fly in Laravel, just like **Symfony's LiipImagi
 
 | Feature | **moonlight-poland/laravel-thumbnails** | lee-to/laravel-thumbnails | spatie/laravel-medialibrary |
 |---------|----------------------------------------|---------------------------|------------------------------|
+| **Context-Aware Thumbnails™** | ✅ **UNIQUE!** Organize by user/post/album | ❌ Everything in one folder | ❌ Only via database |
+| **Custom path templates** | ✅ Full control with placeholders | ❌ No | ⚠️ Limited |
 | **On-demand generation** | ✅ Automatic (middleware) | ✅ Manual | ✅ Manual |
 | **Crop/Fit/Resize methods** | ✅ 3 methods | ✅ 3 methods | ✅ Yes |
 | **Zero config** | ✅ Works out-of-box | ⚠️ Requires setup | ⚠️ Complex setup |
@@ -27,13 +29,42 @@ Generate image thumbnails on-the-fly in Laravel, just like **Symfony's LiipImagi
 | **Artisan commands** | ✅ Yes | ❌ No | ✅ Yes |
 | **Middleware fallback** | ✅ Auto-generate on 404 | ❌ No | ❌ No |
 | **HasThumbnails trait** | ✅ Yes | ✅ Yes | ✅ Yes |
+| **Per-user isolation** | ✅ Built-in via contexts | ❌ Manual only | ⚠️ Via database |
+| **Easy cleanup** | ✅ Delete folder = done | ⚠️ Manual file cleanup | ✅ Via database |
 | **Commercial support** | ✅ Tiered licensing | ❌ No | ✅ Yes (Spatie) |
 | **Database storage** | ❌ Filesystem only | ❌ Filesystem only | ✅ Yes |
-| **File conversions** | ❌ No | ❌ No | ✅ Yes |
 
-**Best for:** Laravel apps that need **fast, automatic thumbnails** without database overhead.
+**Best for:** Laravel apps that need **fast, automatic, organized thumbnails** without database overhead.
 
 **When to use Spatie:** When you need database storage, file conversions, and full media library management.
+
+### 🔥 What Makes Context-Aware Thumbnails™ Special?
+
+**Other packages dump all thumbnails in one folder. We organize them exactly where your content lives:**
+
+```
+❌ OTHER PACKAGES:
+storage/thumbnails/
+  ├── user1_avatar_thumb_small.jpg
+  ├── post42_image_thumb_small.jpg
+  ├── gallery_photo_thumb_small.jpg
+  └── ... 10,000+ files in one folder!
+
+✅ CONTEXT-AWARE THUMBNAILS™:
+storage/
+  ├── user-posts/1/12/thumbnails/image_thumb_small.jpg
+  ├── galleries/5/3/thumbnails/photo_thumb_medium.jpg
+  ├── avatars/8/thumbnails/avatar_thumb_small.jpg
+  └── fanpages/42/photos/thumbnails/banner_thumb_large.jpg
+```
+
+**Benefits:**
+- ✅ **Delete post** → thumbnails automatically deleted with folder
+- ✅ **Per-user backups** → backup specific user folders
+- ✅ **CDN routing** → route different contexts to different CDNs
+- ✅ **Filesystem performance** → fewer files per directory = faster I/O
+- ✅ **Security** → isolate user content with directory permissions
+- ✅ **Organization** → find thumbnails instantly, no database queries
 
 ---
 
@@ -52,15 +83,16 @@ See [LICENSE.md](LICENSE.md) for details.
 
 ## ✨ Features
 
+- 🔥 **Context-Aware Thumbnails™** - Organize thumbnails by user/post/album/any structure (UNIQUE!)
 - 🚀 **On-Demand Generation** - Thumbnails generated only when requested (lazy loading)
 - 💾 **Filesystem Cache** - Fast subsequent loads, no Redis/Memcached needed
 - 🔌 **Zero Configuration** - Sensible defaults, works out of the box
 - 🎨 **Multiple Drivers** - GD (default), Imagick, or Intervention Image
 - 📐 **3 Resize Methods** - Resize (proportional), Crop (exact size), Fit (with padding)
-- 🔧 **Fully Configurable** - Custom sizes, quality, drivers, and more
-- 🎯 **Blade Directive** - `@thumbnail('path/image.jpg', 'small')`
+- 🔧 **Fully Configurable** - Custom sizes, quality, drivers, paths, and more
+- 🎯 **Blade Directive** - `@thumbnail('path/image.jpg', 'small', 'post', ['user_id' => 1])`
 - 📦 **Facade & Helpers** - Multiple ways to use
-- 🗑️ **Auto Cleanup** - Optional trait for automatic thumbnail deletion
+- 🗑️ **Auto Cleanup** - Delete folder = thumbnails gone
 - 🛠️ **Artisan Commands** - Generate or clear thumbnails via CLI
 - 🌐 **JavaScript Helper** - Frontend utilities included
 - ✅ **Laravel 10 & 11** - Full support for modern Laravel
@@ -118,6 +150,123 @@ php artisan storage:link
 
 - **First request**: Generates thumbnail (~50-200ms)
 - **Next requests**: Cached file served by Nginx (~1-5ms)
+
+---
+
+## 🔥 Context-Aware Thumbnails™ (UNIQUE FEATURE!)
+
+**The only Laravel package that organizes thumbnails exactly where your content lives!**
+
+### Why Context Matters
+
+Traditional packages dump all thumbnails into one folder. This causes:
+- ❌ Messy filesystem (thousands of files in one directory)
+- ❌ Difficult cleanup (delete post, but thumbnails remain)
+- ❌ No per-user isolation
+- ❌ CDN routing nightmare
+- ❌ Slow backups (can't backup specific content types)
+
+**Context-Aware Thumbnails™ solves this:**
+
+```blade
+{{-- USER POST CONTEXT --}}
+<img src="@thumbnail('image.jpg', 'small', 'post', ['user_id' => 1, 'post_id' => 12])">
+{{-- Result: /storage/user-posts/1/12/thumbnails/image_thumb_small.jpg --}}
+
+{{-- GALLERY CONTEXT --}}
+<img src="@thumbnail('photo.jpg', 'medium', 'gallery', ['user_id' => 5, 'album_id' => 3])">
+{{-- Result: /storage/galleries/5/3/thumbnails/photo_thumb_medium.jpg --}}
+
+{{-- AVATAR CONTEXT --}}
+<img src="@thumbnail('avatar.jpg', 'small', 'avatar', ['user_id' => 8])">
+{{-- Result: /storage/avatars/8/thumbnails/avatar_thumb_small.jpg --}}
+
+{{-- NO CONTEXT (default) --}}
+<img src="@thumbnail('cat.jpg', 'small')">
+{{-- Result: /storage/thumbnails/cat_thumb_small.jpg --}}
+```
+
+### Configuration
+
+Define custom contexts in `config/thumbnails.php`:
+
+```php
+'contexts' => [
+    // User posts - separate per user and post
+    'post' => 'user-posts/{user_id}/{post_id}',
+    
+    // Gallery - separate per user and album
+    'gallery' => 'galleries/{user_id}/{album_id}',
+    
+    // Avatars - per user only
+    'avatar' => 'avatars/{user_id}',
+    
+    // Fanpage content
+    'fanpage' => 'fanpages/{fanpage_id}/{type}',
+    
+    // Your custom contexts
+    'product' => 'products/{category_id}/{product_id}',
+    'team' => 'companies/{company_id}/team',
+],
+```
+
+### PHP Usage
+
+```php
+// In controllers
+$url = thumbnail('image.jpg', 'small', true, 'post', [
+    'user_id' => auth()->id(),
+    'post_id' => $post->id
+]);
+
+// Helper functions
+$url = thumbnail_url('photo.jpg', 'medium', 'gallery', [
+    'user_id' => $user->id,
+    'album_id' => $album->id
+]);
+
+// Facade
+use Thumbnail;
+$url = Thumbnail::generate('avatar.jpg', 'small', true, 'avatar', [
+    'user_id' => $user->id
+]);
+```
+
+### Model Integration
+
+```php
+use Moonlight\Thumbnails\Traits\HasThumbnails;
+
+class UserPost extends Model
+{
+    use HasThumbnails;
+    
+    // Define default context for this model
+    protected $thumbnailContext = 'post';
+    
+    // Provide context data automatically
+    public function getThumbnailContextData(): array
+    {
+        return [
+            'user_id' => $this->user_id,
+            'post_id' => $this->id,
+        ];
+    }
+}
+
+// In Blade - context applied automatically!
+<img src="{{ $post->thumbnail('image.jpg', 'small') }}">
+{{-- Auto-uses 'post' context with user_id and post_id --}}
+```
+
+### Benefits
+
+1. **✅ Automatic Cleanup** - Delete post folder = all thumbnails gone
+2. **✅ Per-User Isolation** - Easy permissions & backups per user
+3. **✅ CDN Routing** - Route different contexts to different CDNs
+4. **✅ Performance** - Fewer files per directory = faster filesystem
+5. **✅ Organization** - Find any thumbnail instantly
+6. **✅ Scalability** - No "one folder with million files" problem
 
 ---
 

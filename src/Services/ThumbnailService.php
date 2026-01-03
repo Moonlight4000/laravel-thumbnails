@@ -49,11 +49,27 @@ class ThumbnailService
      * @param string $imagePath Relative path (e.g., "photos/image.jpg")
      * @param string $size Size name from config (e.g., "small", "medium")
      * @param bool $returnUrl Return full URL instead of path
+     * @param string|null $context Context name from config (e.g., "post", "gallery")
+     * @param array $contextData Data for context placeholders (e.g., ['user_id' => 1, 'post_id' => 12])
      * @return string|null Thumbnail URL/path or null on error
      */
-    public function thumbnail(string $imagePath, string $size = 'small', bool $returnUrl = true): ?string
+    public function thumbnail(
+        string $imagePath, 
+        string $size = 'small', 
+        bool $returnUrl = true,
+        ?string $context = null,
+        array $contextData = []
+    ): ?string
     {
         $disk = Config::get('thumbnails.disk', 'public');
+        
+        // 🔥 CONTEXT-AWARE PATH RESOLUTION (UNIQUE FEATURE!)
+        // © 2024-2026 Moonlight Poland
+        $originalPath = $imagePath;
+        if ($context) {
+            $contextPath = $this->resolveContextPath($context, $contextData);
+            $imagePath = $contextPath ? "{$contextPath}/" . basename($imagePath) : basename($imagePath);
+        }
         
         // Check if original exists
         if (!Storage::disk($disk)->exists($imagePath)) {
@@ -379,6 +395,45 @@ class ThumbnailService
         }
         
         return $sizes[$sizeName];
+    }
+    
+    /**
+     * Resolve context path from template and data
+     * 
+     * Context-Aware Thumbnails™ - Proprietary path resolution algorithm
+     * © 2024-2026 Moonlight Poland <kontakt@howtodraw.pl>
+     * 
+     * @param string $context Context name (e.g., "post", "gallery")
+     * @param array $data Context data (e.g., ['user_id' => 1, 'post_id' => 12])
+     * @return string Resolved path (e.g., "user-posts/1/12")
+     * @throws \Exception If context not found or missing data
+     */
+    protected function resolveContextPath(string $context, array $data): string
+    {
+        $contexts = Config::get('thumbnails.contexts', []);
+        
+        if (!isset($contexts[$context])) {
+            throw new \Exception("Thumbnail context '{$context}' not defined in config/thumbnails.php");
+        }
+        
+        $template = $contexts[$context];
+        
+        // Empty template = use default (no context path)
+        if (empty($template)) {
+            return '';
+        }
+        
+        // Replace all placeholders: {user_id}, {post_id}, etc.
+        foreach ($data as $key => $value) {
+            $template = str_replace('{' . $key . '}', $value, $template);
+        }
+        
+        // Check if all placeholders were replaced
+        if (preg_match('/\{([^}]+)\}/', $template, $matches)) {
+            throw new \Exception("Missing context data '{$matches[1]}' for context '{$context}'. Required: {$contexts[$context]}");
+        }
+        
+        return trim($template, '/');
     }
     
     /**

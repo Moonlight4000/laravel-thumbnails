@@ -15,17 +15,25 @@
 
 if (!function_exists('thumbnail')) {
     /**
-     * Generate thumbnail URL on-demand
+     * Generate thumbnail URL on-demand with Context-Aware Thumbnails™
      * 
      * @param string $imagePath Relative path to image
      * @param string $size Size name (small, medium, large, etc.)
      * @param bool $returnUrl Return URL instead of path
+     * @param string|null $context Context name (post, gallery, avatar, etc.)
+     * @param array $contextData Context data (e.g., ['user_id' => 1, 'post_id' => 12])
      * @return string|null
      */
-    function thumbnail(string $imagePath, string $size = 'small', bool $returnUrl = true): ?string
+    function thumbnail(
+        string $imagePath, 
+        string $size = 'small', 
+        bool $returnUrl = true,
+        ?string $context = null,
+        array $contextData = []
+    ): ?string
     {
         return app('Moonlight\Thumbnails\Services\ThumbnailService')
-            ->thumbnail($imagePath, $size, $returnUrl);
+            ->thumbnail($imagePath, $size, $returnUrl, $context, $contextData);
     }
 }
 
@@ -33,9 +41,14 @@ if (!function_exists('thumbnail_url')) {
     /**
      * Get thumbnail URL (alias for thumbnail())
      */
-    function thumbnail_url(string $imagePath, string $size = 'small'): ?string
+    function thumbnail_url(
+        string $imagePath, 
+        string $size = 'small',
+        ?string $context = null,
+        array $contextData = []
+    ): ?string
     {
-        return thumbnail($imagePath, $size, true);
+        return thumbnail($imagePath, $size, true, $context, $contextData);
     }
 }
 
@@ -43,9 +56,14 @@ if (!function_exists('thumbnail_path')) {
     /**
      * Get thumbnail path (relative)
      */
-    function thumbnail_path(string $imagePath, string $size = 'small'): ?string
+    function thumbnail_path(
+        string $imagePath, 
+        string $size = 'small',
+        ?string $context = null,
+        array $contextData = []
+    ): ?string
     {
-        return thumbnail($imagePath, $size, false);
+        return thumbnail($imagePath, $size, false, $context, $contextData);
     }
 }
 

@@ -185,5 +185,54 @@ return [
 
     'enable_middleware' => true,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Context-Aware Paths™ (UNIQUE FEATURE!)
+    |--------------------------------------------------------------------------
+    |
+    | Define custom directory structures for different content types.
+    | Thumbnails will be organized exactly where your content lives!
+    |
+    | Use placeholders: {user_id}, {post_id}, {album_id}, {id}, {type}, etc.
+    | Thumbnails are stored in: {context_path}/thumbnails/
+    |
+    | Example structures:
+    | - 'post' => user-posts/{user_id}/{post_id}/thumbnails/
+    | - 'gallery' => galleries/{user_id}/{album_id}/thumbnails/
+    | - 'avatar' => avatars/{user_id}/thumbnails/
+    |
+    | NO OTHER LARAVEL THUMBNAIL PACKAGE HAS THIS!
+    | Perfect for: organization, per-user isolation, easy cleanup, CDN routing
+    |
+    */
+
+    'contexts' => [
+        // Default - all thumbnails in main folder
+        'default' => '',
+        
+        // User posts - separate per user and post
+        // Example: user-posts/1/12/thumbnails/img_thumb_small.jpg
+        'post' => 'user-posts/{user_id}/{post_id}',
+        
+        // Gallery photos - separate per user and album
+        // Example: galleries/5/3/thumbnails/photo_thumb_medium.jpg
+        'gallery' => 'galleries/{user_id}/{album_id}',
+        
+        // User avatars - per user only
+        // Example: avatars/8/thumbnails/avatar_thumb_small.jpg
+        'avatar' => 'avatars/{user_id}',
+        
+        // Fanpage content - per fanpage and type
+        // Example: fanpages/42/photos/thumbnails/banner_thumb_large.jpg
+        'fanpage' => 'fanpages/{fanpage_id}/{type}',
+        
+        // Generic with single ID
+        // Example: products/15/thumbnails/product_thumb_medium.jpg
+        'generic' => '{type}/{id}',
+        
+        // Add your own custom contexts here!
+        // 'my_context' => 'my-folder/{custom_id}/{sub_id}',
+    ],
+
 ];
 
