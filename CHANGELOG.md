@@ -2,6 +2,18 @@
 
 All notable changes to `laravel-context-aware-thumbnails` will be documented in this file.
 
+## [2.0.1] - 2026-01-03
+
+### Fixed
+- **API Communication**: Added `domain`, `referrer`, and `app_name` to all API calls (verify, alert, daily-stats)
+- **Config**: Removed duplicate `fallback_on_error` key (was on lines 234 and 351)
+- **Console/Queue Safety**: Made `request()` calls null-safe with `request()?->` to prevent crashes in console/queue contexts
+- **Domain Parsing**: Improved domain extraction from `app.url` config when request is not available
+
+### Changed
+- Updated `DailyStatsService` to use `parse_url()` for extracting hostname from config
+- All API endpoints now send complete tracking information for better analytics
+
 ## [2.0.0] - 2026-01-03
 
 ### 🎉 Major Release - Context-Aware Thumbnails v2.0

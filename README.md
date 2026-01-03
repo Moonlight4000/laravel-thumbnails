@@ -563,6 +563,235 @@ Thumbnail::clearAllThumbnails();
 
 ---
 
+## 🆕 V2.0 New Features
+
+### Smart Crop (AI Energy Detection)
+
+Automatically detect the most important part of the image for intelligent cropping:
+
+```php
+// config/thumbnails.php
+'smart_crop' => [
+    'enabled' => true,
+    'algorithm' => 'energy', // 'energy', 'faces', 'saliency'
+    'rule_of_thirds' => true, // Align focal point to rule of thirds
+],
+```
+
+**Usage:**
+```blade
+{{-- Smart crop will detect focal point automatically --}}
+<img src="@thumbnail('photos/portrait.jpg', 'square', 'post', ['user_id' => 1], 'smart-crop')">
+```
+
+**When to use:**
+- Portrait photos (focuses on face/eyes)
+- Product photos (focuses on the product)
+- Landscape photos (focuses on horizon/main subject)
+
+---
+
+### Modern Image Formats (AVIF/WebP)
+
+Automatically convert thumbnails to modern formats for **50% smaller file sizes**:
+
+```php
+// config/thumbnails.php
+'formats' => [
+    'auto_convert' => true,
+    'priority' => ['avif', 'webp', 'jpg'], // Try AVIF first, fallback to WebP, then JPG
+    'quality' => [
+        'avif' => 75,
+        'webp' => 80,
+        'jpg' => 85,
+    ],
+],
+```
+
+**Usage with Blade directive:**
+```blade
+{{-- Automatically generates AVIF, WebP, and JPG variants --}}
+@thumbnail_picture('photos/sunset.jpg', 'large', 'post', ['user_id' => 5])
+{{-- Output:
+<picture>
+  <source srcset="/storage/.../sunset_thumb_large.avif" type="image/avif">
+  <source srcset="/storage/.../sunset_thumb_large.webp" type="image/webp">
+  <img src="/storage/.../sunset_thumb_large.jpg" alt="...">
+</picture>
+--}}
+```
+
+**File size comparison:**
+- AVIF: **~50% smaller** than JPEG (best quality per byte)
+- WebP: **~30% smaller** than JPEG
+- JPG: Original compression
+
+---
+
+### Variants System (Generate Multiple Sizes)
+
+Generate multiple thumbnail sizes at once with preset collections:
+
+```php
+// config/thumbnails.php
+'variants' => [
+    'avatar' => [
+        ['width' => 50, 'height' => 50, 'method' => 'crop'],
+        ['width' => 150, 'height' => 150, 'method' => 'crop'],
+        ['width' => 300, 'height' => 300, 'method' => 'crop'],
+    ],
+    'gallery' => [
+        ['width' => 300, 'height' => 200, 'method' => 'crop'],
+        ['width' => 800, 'height' => 600, 'method' => 'resize'],
+        ['width' => 1200, 'height' => 800, 'method' => 'resize'],
+    ],
+],
+```
+
+**Usage:**
+```php
+// Generate all avatar sizes at once
+$variants = thumbnail_variant($user, 'avatar.jpg', 'avatar');
+// Returns: ['50x50' => 'url', '150x150' => 'url', '300x300' => 'url']
+
+// In Blade
+@foreach(thumbnail_variant($user, 'photo.jpg', 'gallery') as $size => $url)
+    <img src="{{ $url }}" alt="Gallery {{ $size }}">
+@endforeach
+```
+
+**When to use:**
+- User avatars (small, medium, large)
+- Gallery thumbnails (grid, lightbox, full-screen)
+- Responsive images (different screen sizes)
+
+---
+
+### Subdirectory Strategies (Performance at Scale)
+
+Choose how thumbnails are organized on the filesystem:
+
+```php
+// config/thumbnails.php
+'subdirectory' => [
+    'auto_strategy' => true, // Automatically select best strategy
+    'default' => 'hash-prefix',
+    'strategies' => [
+        'context-aware' => [
+            'priority' => 100, // Highest - used for models
+            // Result: user-posts/1/12/thumbnails/image_thumb_small.jpg
+        ],
+        'hash-prefix' => [
+            'priority' => 1, // Lowest - fallback for string paths
+            'config' => [
+                'levels' => 2, // e.g., a/b/
+                'length' => 2,
+            ],
+            // Result: thumbnails/a/b/image_thumb_small.jpg
+        ],
+        'date-based' => [
+            'config' => [
+                'format' => 'Y/m/d', // e.g., 2026/01/03/
+            ],
+            // Result: thumbnails/2026/01/03/image_thumb_small.jpg
+        ],
+    ],
+],
+```
+
+**Performance Benefits:**
+
+| Files | Without Subdirs | With Hash Prefix |
+|-------|----------------|------------------|
+| 1,000 | ⚠️ Slow | ✅ Fast |
+| 10,000 | ❌ Very Slow | ✅ Fast |
+| 100,000 | ❌ Unusable | ✅ Fast |
+| 1,000,000 | ❌ Impossible | ✅ Fast |
+
+**Why:** Operating systems slow down with >1000 files per directory.
+
+---
+
+### Security Validation
+
+Protect against malicious file uploads:
+
+```php
+// config/thumbnails.php
+'security' => [
+    'max_file_size' => 10, // MB
+    'allowed_extensions' => ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'],
+    'allowed_mime_types' => [
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/webp',
+        'image/avif',
+    ],
+    'max_dimensions' => [
+        'width' => 10000,
+        'height' => 10000,
+    ],
+    'block_svg' => true, // Prevent XXE attacks
+],
+```
+
+**Automatic validation:** Package validates all images before processing.
+
+---
+
+### Error Handling Modes
+
+Control how the package behaves when errors occur:
+
+```php
+// config/thumbnails.php
+'error_mode' => 'silent', // 'silent', 'strict', 'fallback'
+'placeholder_image' => 'images/placeholder.jpg', // For 'fallback' mode
+```
+
+**Modes:**
+- **silent** (recommended for production): Log error, return original image
+- **strict** (recommended for development): Throw exception
+- **fallback**: Return placeholder image
+
+**Example:**
+```blade
+{{-- If thumbnail generation fails, original image is returned (silent mode) --}}
+<img src="@thumbnail('photos/corrupted.jpg', 'small')">
+{{-- Instead of crashing, shows original image --}}
+```
+
+---
+
+### Daily Usage Statistics (Privacy-Friendly)
+
+Track thumbnail usage for analytics (commercial license holders only):
+
+```php
+// config/thumbnails.php
+'statistics' => [
+    'enabled' => true,
+    'send_to_moonlight' => true, // Send to Moonlight dashboard
+],
+```
+
+**What's tracked:**
+- ✅ Daily usage count (how many thumbnails generated today)
+- ✅ Methods used (resize, crop, fit)
+- ✅ Popular sizes (which sizes are most used)
+- ✅ PHP/Laravel versions
+- ✅ Domain (where package is installed)
+
+**What's NOT tracked:**
+- ❌ Individual images (no filenames)
+- ❌ User data (no emails, IPs, personal info)
+- ❌ Image content (we never see your images)
+
+**View statistics:** Commercial license holders can view stats at https://howtodraw.pl/developer/licenses
+
+---
+
 ## 🏗️ How It Works
 
 ### Architecture
