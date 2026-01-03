@@ -28,14 +28,14 @@ Generate image thumbnails on-the-fly in Laravel with **Context-Aware Thumbnails�
 | Per-user/post isolation | ✅ Built-in | ❌ Manual | ❌ Manual | ⚠️ Via DB |
 | Commercial licensing | ✅ $500-$15k | ❌ MIT (free) | ❌ MIT | ✅ Spatie |
 | **🖼️ IMAGE PROCESSING** |
-| AVIF format support | 🔜 **v2.0** | ✅ | ❌ | ✅ |
-| WebP format support | 🔜 **v2.0** | ✅ | ❌ | ✅ |
-| Smart Crop (AI energy) | 🔜 **v2.0** | ✅ | ❌ | ✅ |
+| AVIF format support | ✅ **v2.0+** | ✅ | ❌ | ✅ |
+| WebP format support | ✅ **v2.0+** | ✅ | ❌ | ✅ |
+| Smart Crop (AI energy) | ✅ **v2.0+** | ✅ | ❌ | ✅ |
 | Crop/Fit/Resize methods | ✅ All 3 | ✅ SmartCrop | ✅ All 3 | ✅ Yes |
 | Multiple drivers | ✅ GD/Imagick/Intervention | ✅ GD/Imagick | ⚠️ Intervention only | ✅ Yes |
 | Quality control | ✅ Per size | ✅ Per variant | ✅ Global | ✅ Yes |
 | **🛡️ ERROR HANDLING** |
-| Silent/Strict modes | 🔜 **v2.0** | ✅ | ❌ | ⚠️ Limited |
+| Silent/Strict modes | ✅ **v2.0+** | ✅ | ❌ | ⚠️ Limited |
 | Bulletproof fallbacks | ✅ | ✅ | ⚠️ Basic | ✅ |
 | Never breaks app | ✅ | ✅ | ⚠️ Can throw | ✅ |
 | **⚡ GENERATION** |
@@ -57,13 +57,13 @@ Generate image thumbnails on-the-fly in Laravel with **Context-Aware Thumbnails�
 | Eloquent trait | ✅ `HasThumbnails` | ❌ | ✅ | ✅ |
 | Artisan commands | ✅ generate, clear | ✅ purge, optimize | ❌ | ✅ Many |
 | **📊 MONITORING** |
-| Statistics & analytics | 🔜 **v2.0** | ✅ Full | ❌ | ✅ |
-| Performance metrics | 🔜 **v2.0** | ✅ | ❌ | ⚠️ |
-| Disk usage tracking | 🔜 **v2.0** | ✅ | ❌ | ✅ |
+| Statistics & analytics | ✅ **v2.0+** | ✅ Full | ❌ | ✅ |
+| Performance metrics | ✅ **v2.0+** | ✅ | ❌ | ⚠️ |
+| Disk usage tracking | ✅ **v2.0+** | ✅ | ❌ | ✅ |
 | **🔒 SECURITY** |
-| File validation | 🔜 **v2.0** | ✅ | ⚠️ Basic | ✅ |
-| Size limits | 🔜 **v2.0** | ✅ | ❌ | ✅ |
-| Extension whitelist | 🔜 **v2.0** | ✅ | ❌ | ✅ |
+| File validation | ✅ **v2.0+** | ✅ | ⚠️ Basic | ✅ |
+| Size limits | ✅ **v2.0+** | ✅ | ❌ | ✅ |
+| Extension whitelist | ✅ **v2.0+** | ✅ | ❌ | ✅ |
 | Tamper detection | ✅ Commercial only | ❌ | ❌ | ❌ |
 | **💾 STORAGE** |
 | Filesystem cache | ✅ | ✅ | ✅ | ✅ |
