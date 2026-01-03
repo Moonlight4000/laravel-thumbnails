@@ -816,6 +816,12 @@ class ThumbnailService
      */
     protected function checkLicense(): bool
     {
+        // DEVELOPER LICENSE: Auto-approve for localhost/127.0.0.1
+        $host = request()?->getHost() ?? parse_url(Config::get('app.url'), PHP_URL_HOST) ?? 'unknown';
+        if (in_array($host, ['localhost', '127.0.0.1', '::1'])) {
+            return true;
+        }
+        
         $cacheFile = storage_path('framework/cache/moonlight-thumbnails-license.cache');
         
         // Check cache file
