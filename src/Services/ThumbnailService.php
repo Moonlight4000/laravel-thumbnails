@@ -34,6 +34,8 @@ use Moonlight\Thumbnails\Services\Strategies\ContextAwareStrategy;
 use Moonlight\Thumbnails\Services\Strategies\HashPrefixStrategy;
 use Moonlight\Thumbnails\Services\Strategies\DateBasedStrategy;
 use Moonlight\Thumbnails\Services\Strategies\HashLevelsStrategy;
+use Moonlight\Thumbnails\Services\SmartCropService;
+use Moonlight\Thumbnails\Services\DailyStatsService;
 
 /**
  * ThumbnailService
@@ -221,6 +223,25 @@ class ThumbnailService
             return null;
         }
         
+        // Security validation
+        try {
+            $this->validateImage(Storage::disk($disk)->path($imagePath));
+        } catch (\Exception $e) {
+            $this->getLogger()->warning('Image validation failed', [
+                'path' => $imagePath,
+                'error' => $e->getMessage()
+            ]);
+            
+            if (Config::get('thumbnails.error_mode') === 'strict') {
+                throw $e;
+            }
+            
+            // Silent/fallback mode
+            return Config::get('thumbnails.fallback_on_error', true) 
+                ? ($returnUrl ? asset("storage/{$imagePath}") : $imagePath)
+                : null;
+        }
+        
         // Parse path
         $pathInfo = pathinfo($imagePath);
         $directory = $pathInfo['dirname'];
@@ -290,7 +311,16 @@ class ThumbnailService
      */
     protected function generateThumbnail(string $sourcePath, string $thumbnailPath, int $width, int $height): void
     {
+        $method = Config::get('thumbnails.method', 'resize');
         $driver = Config::get('thumbnails.driver', 'gd');
+        
+        // Track statistics
+        try {
+            $statsService = new DailyStatsService();
+            $statsService->track($method, ['width' => $width, 'height' => $height]);
+        } catch (\Exception $e) {
+            // Silent fail - stats shouldn't break generation
+        }
         
         switch ($driver) {
             case 'intervention':
@@ -594,6 +624,54 @@ class ThumbnailService
         $params = []; // Can be extended with width/height/method if needed
         
         return $strategy->buildPath($modelContext, $thumbnailFilename, $params);
+    }
+    
+    /**
+     * Validate image for security
+     * 
+     * @param string $path Full path to image file
+     * @throws \Exception If validation fails
+     */
+    protected function validateImage(string $path): void
+    {
+        if (!file_exists($path)) {
+            throw new \Exception("Image file not found: {$path}");
+        }
+        
+        // Check file size
+        $maxSize = Config::get('thumbnails.security.max_file_size', 10 * 1024 * 1024);
+        $size = filesize($path);
+        
+        if ($size > $maxSize) {
+            throw new \Exception("Image too large: {$size} bytes (max: {$maxSize})");
+        }
+        
+        // Check MIME type
+        $mime = @mime_content_type($path);
+        $allowedMimes = Config::get('thumbnails.security.allowed_mime_types', [
+            'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif'
+        ]);
+        
+        if ($mime && !in_array($mime, $allowedMimes)) {
+            throw new \Exception("Invalid MIME type: {$mime}");
+        }
+        
+        // Check dimensions
+        $imageInfo = @getimagesize($path);
+        if ($imageInfo) {
+            $maxWidth = Config::get('thumbnails.security.max_dimensions.width', 10000);
+            $maxHeight = Config::get('thumbnails.security.max_dimensions.height', 10000);
+            
+            if ($imageInfo[0] > $maxWidth || $imageInfo[1] > $maxHeight) {
+                throw new \Exception("Image dimensions too large: {$imageInfo[0]}x{$imageInfo[1]}");
+            }
+        }
+        
+        // Block SVG if configured
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        if ($extension === 'svg' && Config::get('thumbnails.security.block_svg', true)) {
+            throw new \Exception("SVG files are not allowed");
+        }
     }
     
     /**
