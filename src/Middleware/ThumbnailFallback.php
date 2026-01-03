@@ -103,6 +103,10 @@ class ThumbnailFallback
                     // Generate thumbnail (returns URL or data URI for blocked)
                     $thumbnailUrl = $this->thumbnailService->thumbnail($originalPath, $size, true);
                     
+                    Log::info('ThumbnailFallback: Generated URL', [
+                        'thumbnail_url' => $thumbnailUrl
+                    ]);
+                    
                     // Check if it's a data URI (blocked image)
                     if (str_starts_with($thumbnailUrl, 'data:image/')) {
                         // Extract base64 data
@@ -121,6 +125,12 @@ class ThumbnailFallback
                     // Extract path from URL
                     $thumbnailPath = str_replace([asset('storage/'), '/storage/'], '', $thumbnailUrl);
                     $thumbnailPath = ltrim($thumbnailPath, '/'); // Remove leading slash
+                    
+                    Log::info('ThumbnailFallback: Checking file', [
+                        'thumbnail_path' => $thumbnailPath,
+                        'disk' => $disk,
+                        'full_path' => Storage::disk($disk)->path($thumbnailPath)
+                    ]);
                     
                     // Verify thumbnail was generated
                     if (!Storage::disk($disk)->exists($thumbnailPath)) {
