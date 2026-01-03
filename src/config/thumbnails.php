@@ -441,17 +441,21 @@ return [
         // Example: user-posts/1/12/thumbnails/img_thumb_small.jpg
         'post' => 'user-posts/{user_id}/{post_id}',
         
-        // Gallery photos - separate per user and album
+        // Gallery photos - separate per user, album, and collection
+        // Example: galleries/5/3/7/thumbnails/photo_thumb_medium.jpg
+        'gallery' => 'galleries/{user_id}/{album_id}/{collection_id}',
+        
+        // Legacy gallery photos (without collections)
         // Example: galleries/5/3/thumbnails/photo_thumb_medium.jpg
-        'gallery' => 'galleries/{user_id}/{album_id}',
+        'gallery_legacy' => 'galleries/{user_id}/{album_id}',
         
         // User avatars - per user only
         // Example: avatars/8/thumbnails/avatar_thumb_small.jpg
         'avatar' => 'avatars/{user_id}',
         
-        // Fanpage content - per fanpage and type
-        // Example: fanpages/42/photos/thumbnails/banner_thumb_large.jpg
-        'fanpage' => 'fanpages/{fanpage_id}/{type}',
+        // Fanpage content - per fanpage (fanarts, banners, etc.)
+        // Example: fanarts/42/thumbnails/fanart_thumb_large.jpg
+        'fanpage' => 'fanarts/{fanpage_id}',
         
         // Generic with single ID
         // Example: products/15/thumbnails/product_thumb_medium.jpg
