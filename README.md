@@ -209,6 +209,23 @@ php artisan vendor:publish --tag=thumbnails-config
 php artisan storage:link
 ```
 
+### For React/Vue Apps: Generate JS Helper
+
+**REQUIRED if using React, Vue, or any JavaScript framework:**
+
+```bash
+php artisan thumbnails:sync-js
+```
+
+This generates `resources/js/utils/thumbnails.js` with your config contexts.
+
+**When to run:**
+- ✅ After installation
+- ✅ After changing `config/thumbnails.php`
+- ✅ After adding new contexts
+
+See [React/Vue Usage](#-react--vue--javascript-usage) section below for details.
+
 ---
 
 ## 🚀 Quick Start
