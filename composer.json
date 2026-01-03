@@ -1,5 +1,5 @@
 {
-    "name": "moonlight/laravel-thumbnails",
+    "name": "moonlight-poland/laravel-thumbnails",
     "description": "Generate image thumbnails on-demand in Laravel, inspired by Symfony's LiipImagineBundle. Zero configuration, filesystem-cached, blazing fast.",
     "keywords": [
         "laravel",
