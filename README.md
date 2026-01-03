@@ -77,7 +77,8 @@ storage/
 
 See [LICENSE.md](LICENSE.md) for details.
 
-**Commercial licenses:** https://moonlight.app/thumbnails/pricing
+**Contact:** kontakt@howtodraw.pl  
+**GitHub:** https://github.com/Moonlight4000/laravel-thumbnails
 
 ---
 
@@ -118,7 +119,7 @@ php artisan thumbnails:license --type=personal
 php artisan thumbnails:license YOUR-LICENSE-KEY
 ```
 
-**Purchase a license:** https://moonlight.app/thumbnails/pricing
+**Contact for licensing:** kontakt@howtodraw.pl
 
 ### Optional: Publish Config
 
@@ -545,7 +546,7 @@ storage/app/public/photos/
 
 **Full details:** [LICENSE.md](LICENSE.md)
 
-**Purchase:** https://moonlight.app/thumbnails/pricing
+**Contact for commercial licensing:** kontakt@howtodraw.pl
 
 ### Why Commercial License?
 
@@ -624,10 +625,10 @@ function ImageGallery({ images }) {
 
 This is a commercial package. We welcome:
 - 🐛 Bug reports (GitHub Issues)
-- 💡 Feature suggestions (contact us)
+- 💡 Feature suggestions (GitHub Issues)
 - 📖 Documentation improvements (PRs welcome)
 
-**For commercial features:** Contact enterprise@moonlight.app
+**Contact:** kontakt@howtodraw.pl
 
 ---
 
@@ -645,27 +646,15 @@ Inspired by:
 - [Symfony's LiipImagineBundle](https://github.com/liip/LiipImagineBundle)
 - [Intervention Image](https://github.com/Intervention/image)
 
-Built with ❤️ by the [Moonlight Team](https://moonlight.app)
+Built with ❤️ by Moonlight Poland Team
 
 ---
 
-## 🐛 Support
+## 📞 Support
 
-**Free License (Personal):**
-- GitHub Issues: https://github.com/moonlight/laravel-thumbnails/issues
-- Community Discord: https://discord.gg/moonlight
-
-**Paid Licenses:**
-- Small Business: support@moonlight.app (48h response)
-- Medium Business: priority@moonlight.app (24h response)
-- Enterprise: enterprise@moonlight.app (12h response + SLA)
-
-**Sales & Licensing:**
-- Email: licensing@moonlight.app
-- Website: https://moonlight.app/thumbnails
+**GitHub Issues:** https://github.com/Moonlight4000/laravel-thumbnails/issues  
+**Email:** kontakt@howtodraw.pl
 
 ---
 
 **⭐ If this package helped you, please star it on GitHub!**
-
-**💼 Need a commercial license? [Get started here](https://moonlight.app/thumbnails/pricing)**
