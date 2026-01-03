@@ -1,0 +1,73 @@
+{
+    "name": "moonlight/laravel-thumbnails",
+    "description": "Generate image thumbnails on-demand in Laravel, inspired by Symfony's LiipImagineBundle. Zero configuration, filesystem-cached, blazing fast.",
+    "keywords": [
+        "laravel",
+        "thumbnails",
+        "images",
+        "on-demand",
+        "lazy",
+        "intervention",
+        "gd",
+        "imagick",
+        "symfony",
+        "liip"
+    ],
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Moonlight Team",
+            "email": "dev@moonlight.app"
+        }
+    ],
+    "require": {
+        "php": "^8.1|^8.2|^8.3",
+        "illuminate/support": "^10.0|^11.0",
+        "illuminate/http": "^10.0|^11.0",
+        "illuminate/filesystem": "^10.0|^11.0",
+        "ext-gd": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0|^11.0",
+        "orchestra/testbench": "^8.0|^9.0",
+        "mockery/mockery": "^1.6",
+        "intervention/image": "^2.7|^3.0"
+    },
+    "suggest": {
+        "intervention/image": "For better image quality and more features",
+        "ext-imagick": "For better image processing performance"
+    },
+    "autoload": {
+        "psr-4": {
+            "Moonlight\\Thumbnails\\": "src/"
+        },
+        "files": [
+            "src/helpers.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Moonlight\\Thumbnails\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Moonlight\\Thumbnails\\ThumbnailsServiceProvider"
+            ],
+            "aliases": {
+                "Thumbnail": "Moonlight\\Thumbnails\\Facades\\Thumbnail"
+            }
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
+

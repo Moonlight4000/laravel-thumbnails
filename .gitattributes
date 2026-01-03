@@ -1,0 +1,11 @@
+# Laravel Thumbnails Package
+
+/.github
+/tests
+/.gitattributes
+/.gitignore
+/phpunit.xml
+/phpunit.xml.dist
+/.php-cs-fixer.php
+/.php-cs-fixer.dist.php
+
