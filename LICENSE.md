@@ -35,7 +35,7 @@ This software and associated documentation files (the "Software") are proprietar
 
 **Qualifications:**
 - Team size: **1-10 developers**
-- Annual revenue: **Under $1,000,000 USD**
+- Annual revenue: **Under $500,000 USD**
 - Commercial projects: **Up to 5 active projects**
 
 **Includes:**
@@ -59,7 +59,7 @@ This software and associated documentation files (the "Software") are proprietar
 
 **Qualifications:**
 - Team size: **11-50 developers**
-- Annual revenue: **$1,000,000 - $10,000,000 USD**
+- Annual revenue: **$500,000 - $10,000,000 USD**
 - Commercial projects: **Up to 15 active projects**
 
 **Includes:**
