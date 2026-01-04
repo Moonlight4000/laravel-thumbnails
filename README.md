@@ -22,6 +22,7 @@ Generate image thumbnails on-the-fly in Laravel with **Context-Aware Thumbnails�
 4. **🤖 Smart Crop with AI Energy Detection** - Automatically focuses on important image areas
 5. **🚀 AVIF/WebP Support** - Modern formats for 50%+ smaller file sizes
 6. **🔒 Commercial Licensing** - Professional support & tamper detection included
+7. **Signed URLs (Facebook-style)** - Time-limited, cryptographically signed protection
 
 ---
 
