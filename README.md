@@ -18,9 +18,35 @@ Generate image thumbnails on-the-fly in Laravel with **Context-Aware Thumbnails�
 
 1. **🎯 Context-Aware Organization™** - Thumbnails organized by user/post/album (no other package does this!)
 2. **⚛️ React/Vue/JavaScript Support** - The ONLY Laravel thumbnail package with `sync-js` command for frontend frameworks
-3. **🤖 Smart Crop with AI Energy Detection** - Automatically focuses on important image areas
-4. **🚀 AVIF/WebP Support** - Modern formats for 50%+ smaller file sizes
-5. **🔒 Commercial Licensing** - Professional support & tamper detection included
+3. **🔐 Signed URLs (Facebook-style)** - Time-limited, cryptographically signed URLs to prevent hotlinking
+4. **🤖 Smart Crop with AI Energy Detection** - Automatically focuses on important image areas
+5. **🚀 AVIF/WebP Support** - Modern formats for 50%+ smaller file sizes
+6. **🔒 Commercial Licensing** - Professional support & tamper detection included
+
+---
+
+## 📋 Table of Contents
+
+- [Why Choose This Over Other Packages?](#-why-choose-this-over-other-packages)
+- [What Makes Context-Aware Thumbnails™ Special?](#-what-makes-context-aware-thumbnails-special)
+- [License Notice](#%EF%B8%8F-license-notice)
+- [Features](#-features)
+- [Installation](#-installation)
+- [Quick Start](#-quick-start)
+- [Configuration](#-configuration)
+- [Usage](#-usage)
+  - [Blade Directive](#blade-directive)
+  - [Helper Function](#helper-function)
+  - [Eloquent Trait](#eloquent-trait)
+  - [React / Vue / JavaScript Usage](#react--vue--javascript-usage)
+  - [Signed URLs (Facebook-style Protection)](#-signed-urls-facebook-style-protection)
+- [Context-Aware Thumbnails™](#-context-aware-thumbnails)
+- [Advanced Features](#-advanced-features)
+- [Artisan Commands](#-artisan-commands)
+- [Testing](#-testing)
+- [Contributing](#-contributing)
+- [License](#-license)
+- [Credits](#-credits)
 
 ---
 
@@ -74,6 +100,9 @@ Generate image thumbnails on-the-fly in Laravel with **Context-Aware Thumbnails�
 | File validation | ✅ **v2.0+** | ✅ | ⚠️ Basic | ✅ |
 | Size limits | ✅ **v2.0+** | ✅ | ❌ | ✅ |
 | Extension whitelist | ✅ **v2.0+** | ✅ | ❌ | ✅ |
+| **Signed URLs (Facebook-style)** | ✅ **v2.0.16+** | ❌ | ❌ | ⚠️ Via S3 |
+| Time-limited links | ✅ **v2.0.16+** | ❌ | ❌ | ❌ |
+| Hotlinking prevention | ✅ **v2.0.16+** | ❌ | ❌ | ⚠️ Via S3 |
 | Tamper detection | ✅ Commercial only | ❌ | ❌ | ❌ |
 | **💾 STORAGE** |
 | Filesystem cache | ✅ | ✅ | ✅ | ✅ |
@@ -92,6 +121,7 @@ Generate image thumbnails on-the-fly in Laravel with **Context-Aware Thumbnails�
 - ✅ **Context-Aware organization** (unique feature!)
 - ✅ Thumbnails organized by user/post/album automatically
 - ✅ **React/Vue/JavaScript support** (ONLY package with sync-js!)
+- ✅ **Signed URLs (Facebook-style)** - Time-limited, cryptographically signed protection
 - ✅ **Auto-strategy**: Context-Aware for models, Hash for paths
 - ✅ **Smart Crop with energy detection** (v2.0)
 - ✅ **AVIF/WebP modern formats** (v2.0)
@@ -101,27 +131,6 @@ Generate image thumbnails on-the-fly in Laravel with **Context-Aware Thumbnails�
 - ✅ Automatic middleware fallback
 - ✅ Commercial support with licensing
 - ✅ Simple filesystem-based solution
-
-#### Choose **askancy/laravel-smart-thumbnails** if you need:
-- ✅ Advanced smart crop algorithm (energy detection) - **NOW**
-- ✅ AVIF/WebP support - **NOW**
-- ✅ Extensive statistics and monitoring - **NOW**
-- ✅ Hash-based subdirectory strategies
-- ✅ Silent/Strict error modes
-- ❌ BUT: No context-aware organization
-
-#### Choose **lee-to/laravel-thumbnails** if you need:
-- ✅ Simple, basic thumbnail generation
-- ✅ Russian community support
-- ❌ Limited features compared to others
-
-#### Choose **spatie/laravel-medialibrary** if you need:
-- ✅ Full media library management
-- ✅ Database storage for metadata
-- ✅ File conversions beyond images
-- ✅ Battle-tested (50k+ installs)
-- ❌ More complex setup
-- ❌ Requires database for everything
 
 ---
 
@@ -173,16 +182,17 @@ See [LICENSE.md](LICENSE.md) for details.
 
 - 🔥 **Context-Aware Thumbnails™** - Organize thumbnails by user/post/album/any structure (UNIQUE!)
 - 🚀 **On-Demand Generation** - Thumbnails generated only when requested (lazy loading)
+- 🔐 **Signed URLs (Facebook-style)** - Time-limited, cryptographically signed URLs to prevent hotlinking
 - 💾 **Filesystem Cache** - Fast subsequent loads, no Redis/Memcached needed
 - 🔌 **Zero Configuration** - Sensible defaults, works out of the box
 - 🎨 **Multiple Drivers** - GD (default), Imagick, or Intervention Image
 - 📐 **3 Resize Methods** - Resize (proportional), Crop (exact size), Fit (with padding)
 - 🔧 **Fully Configurable** - Custom sizes, quality, drivers, paths, and more
 - 🎯 **Blade Directive** - `@thumbnail('path/image.jpg', 'small', 'post', ['user_id' => 1])`
+- ⚛️ **React/Vue/JavaScript Helper** - Full feature parity with PHP (sync-js command)
 - 📦 **Facade & Helpers** - Multiple ways to use
 - 🗑️ **Auto Cleanup** - Delete folder = thumbnails gone
 - 🛠️ **Artisan Commands** - Generate or clear thumbnails via CLI
-- 🌐 **JavaScript Helper** - Frontend utilities included
 - ✅ **Laravel 10 & 11** - Full support for modern Laravel
 
 ---
