@@ -22,6 +22,8 @@ if (!function_exists('thumbnail')) {
      * @param bool $returnUrl Return URL instead of path
      * @param string|null $context Context name (post, gallery, avatar, etc.)
      * @param array $contextData Context data (e.g., ['user_id' => 1, 'post_id' => 12])
+     * @param bool|null $signed Enable signed URLs (null = use config default)
+     * @param int|null $expiresIn Expiration in seconds (null = use config default)
      * @return string|null
      */
     function thumbnail(
@@ -29,11 +31,13 @@ if (!function_exists('thumbnail')) {
         string $size = 'small', 
         bool $returnUrl = true,
         ?string $context = null,
-        array $contextData = []
+        array $contextData = [],
+        ?bool $signed = null,
+        ?int $expiresIn = null
     ): ?string
     {
         return app('Moonlight\Thumbnails\Services\ThumbnailService')
-            ->thumbnail($imagePath, $size, $returnUrl, $context, $contextData);
+            ->thumbnail($imagePath, $size, $returnUrl, $context, $contextData, $signed, $expiresIn);
     }
 }
 
@@ -64,6 +68,36 @@ if (!function_exists('thumbnail_path')) {
     ): ?string
     {
         return thumbnail($imagePath, $size, false, $context, $contextData);
+    }
+}
+
+if (!function_exists('original')) {
+    /**
+     * Get original (full-size) image URL with optional signed URL protection
+     * 
+     * @param string $imagePath Relative path to original image
+     * @param bool|null $signed Enable signed URLs (null = use config 'sign_originals')
+     * @param int|null $expiresIn Expiration in seconds (null = use config default)
+     * @return string
+     */
+    function original(
+        string $imagePath,
+        ?bool $signed = null,
+        ?int $expiresIn = null
+    ): string
+    {
+        $disk = config('thumbnails.disk', 'public');
+        
+        // Determine if we should sign this URL
+        $shouldSign = $signed ?? config('thumbnails.signed_urls.sign_originals', false);
+        
+        if ($shouldSign) {
+            /** @var \Moonlight\Thumbnails\Services\SignedUrlService $signedUrlService */
+            $signedUrlService = app('Moonlight\Thumbnails\Services\SignedUrlService');
+            return $signedUrlService->generateSignedUrl($imagePath, $expiresIn);
+        }
+        
+        return asset("storage/{$imagePath}");
     }
 }
 

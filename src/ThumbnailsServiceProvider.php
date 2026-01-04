@@ -18,7 +18,9 @@ namespace Moonlight\Thumbnails;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Blade;
 use Moonlight\Thumbnails\Services\ThumbnailService;
+use Moonlight\Thumbnails\Services\SignedUrlService;
 use Moonlight\Thumbnails\Middleware\ThumbnailFallback;
+use Moonlight\Thumbnails\Middleware\ValidateSignedUrl;
 use Moonlight\Thumbnails\Commands\ThumbnailGenerateCommand;
 use Moonlight\Thumbnails\Commands\ThumbnailClearCommand;
 use Moonlight\Thumbnails\Commands\ThumbnailSyncJsCommand;
@@ -45,6 +47,11 @@ class ThumbnailsServiceProvider extends ServiceProvider
         // Register ThumbnailService as singleton
         $this->app->singleton(ThumbnailService::class, function ($app) {
             return new ThumbnailService();
+        });
+        
+        // Register SignedUrlService as singleton
+        $this->app->singleton(SignedUrlService::class, function ($app) {
+            return new SignedUrlService();
         });
         
         // Register Facade alias
@@ -75,10 +82,16 @@ class ThumbnailsServiceProvider extends ServiceProvider
             return "<?php echo app('Moonlight\\Thumbnails\\Services\\ThumbnailService')->thumbnail({$expression}); ?>";
         });
         
-        // Register middleware globally (if enabled in config)
+        // Register middleware for on-demand thumbnail generation (if enabled)
         if (config('thumbnails.enable_middleware', true)) {
             $this->app[\Illuminate\Contracts\Http\Kernel::class]
                 ->pushMiddleware(ThumbnailFallback::class);
+        }
+        
+        // Register signed URL validation middleware (if enabled)
+        if (config('thumbnails.signed_urls.enabled', false)) {
+            $this->app[\Illuminate\Contracts\Http\Kernel::class]
+                ->pushMiddleware(ValidateSignedUrl::class);
         }
     }
 }

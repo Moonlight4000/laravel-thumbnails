@@ -465,5 +465,51 @@ return [
         // 'my_context' => 'my-folder/{custom_id}/{sub_id}',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Signed URLs Protection (Facebook-style)
+    |--------------------------------------------------------------------------
+    |
+    | Protect your images with signed URLs that expire after a set time.
+    | Like Facebook - prevents hotlinking and unauthorized access.
+    |
+    | - enabled: Enable signed URLs for thumbnails
+    | - sign_originals: Also sign original image URLs (not thumbnails)
+    | - secret: Secret key for HMAC signature (use APP_KEY or generate new)
+    | - expiration: URL validity in seconds (default: 7 days)
+    | - algorithm: Hash algorithm for signatures (default: sha256)
+    |
+    | Generated URLs look like: /storage/image.jpg?oh=signature&oe=expires
+    | 
+    | After expiration, links return 404. Invalid signatures return 403.
+    |
+    | Usage:
+    | - Global: Set THUMBNAILS_SIGNED_URLS=true in .env
+    | - Per-call: thumbnail($path, 'large', signed: true)
+    | - Per-call disable: thumbnail($path, 'large', signed: false)
+    |
+    */
+
+    'signed_urls' => [
+        // Enable globally for all thumbnails
+        'enabled' => env('THUMBNAILS_SIGNED_URLS', false),
+        
+        // Also sign original (full-size) images
+        'sign_originals' => env('THUMBNAILS_SIGNED_ORIGINALS', false),
+        
+        // Secret key for HMAC signature (NEVER commit to git!)
+        // Use APP_KEY or generate: php artisan tinker -> Str::random(64)
+        'secret' => env('THUMBNAILS_SIGN_SECRET', env('APP_KEY')),
+        
+        // URL expiration time in seconds
+        // 604800 = 7 days (like Facebook)
+        // 3600 = 1 hour
+        // 86400 = 1 day
+        'expiration' => env('THUMBNAILS_URL_EXPIRATION', 604800),
+        
+        // Hash algorithm (sha256 recommended)
+        'algorithm' => 'sha256',
+    ],
+
 ];
 

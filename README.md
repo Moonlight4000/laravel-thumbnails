@@ -852,6 +852,173 @@ Automatically convert thumbnails to modern formats for **50% smaller file sizes*
 // config/thumbnails.php
 'formats' => [
     'auto_convert' => true,
+    'priority' => ['avif', 'webp', 'jpg'], // Try in order
+    'quality' => [
+        'avif' => 85,
+        'webp' => 90,
+        'jpg' => 85,
+    ],
+],
+```
+
+**How it works:**
+1. Package checks available image libraries (GD, Imagick, Intervention)
+2. Selects best available format from priority list
+3. Generates thumbnail in optimal format
+4. Falls back to JPEG if modern formats unavailable
+
+**Performance:**
+- AVIF: ~50% smaller than JPEG (requires Imagick)
+- WebP: ~30% smaller than JPEG (GD/Imagick)
+- Automatic fallback ensures compatibility
+
+---
+
+### 🔐 Signed URLs (Facebook-style Protection)
+
+Protect your images with expiring signed URLs - just like Facebook!
+
+**Why use Signed URLs?**
+- 🚫 **Prevent hotlinking** - Other sites can't steal your bandwidth
+- ⏰ **Time-limited access** - Links expire after set time (e.g., 7 days)
+- 🔒 **Security** - Cryptographic signatures prevent tampering
+- 📊 **Control** - Track and manage image access
+
+**Configuration:**
+
+```bash
+# .env
+THUMBNAILS_SIGNED_URLS=true                    # Enable for thumbnails
+THUMBNAILS_SIGNED_ORIGINALS=true               # Also sign original images
+THUMBNAILS_SIGN_SECRET="${APP_KEY}"            # Secret key (use APP_KEY)
+THUMBNAILS_URL_EXPIRATION=604800               # 7 days (like Facebook)
+```
+
+**Usage - Global (ENV):**
+
+```blade
+{{-- Uses global config from .env --}}
+<img src="{{ thumbnail($post->image, 'large') }}">
+{{-- Result: /storage/image.jpg?oh=abc123&oe=695F93A7&_t=ef45cd89 --}}
+```
+
+**Usage - Per Image (Override):**
+
+```blade
+{{-- Force signed URL (even if globally disabled) --}}
+<img src="{{ thumbnail($post->image, 'large', signed: true) }}">
+
+{{-- Disable signed URL (even if globally enabled) --}}
+<img src="{{ thumbnail($post->image, 'large', signed: false) }}">
+
+{{-- Custom expiration (1 hour instead of default) --}}
+<img src="{{ thumbnail($post->image, 'large', signed: true, expiresIn: 3600) }}">
+```
+
+**Usage - Original Images:**
+
+```blade
+{{-- Original (full-size) image with signed URL --}}
+<img src="{{ original($post->image) }}">
+{{-- Uses THUMBNAILS_SIGNED_ORIGINALS from config --}}
+
+{{-- Force signed for original --}}
+<img src="{{ original($post->image, signed: true) }}">
+
+{{-- Custom expiration for original --}}
+<img src="{{ original($post->image, signed: true, expiresIn: 86400) }}">
+```
+
+**How it works:**
+
+1. **URL Generation:**
+   - Package generates HMAC-SHA256 signature from: `path + expiration + secret`
+   - Appends parameters: `?oh=signature&oe=expiration_hex`
+   - Example: `/storage/image.jpg?oh=abc123&oe=695F93A7`
+
+2. **URL Validation (Middleware):**
+   - User requests signed URL
+   - Middleware intercepts request
+   - Checks: Is signature valid? Is URL expired?
+   - If valid → serves image
+   - If invalid/expired → returns 403/404
+
+3. **URL Expiration:**
+   - Links stop working after expiration time
+   - Default: 7 days (like Facebook)
+   - Customizable per image or globally
+   - After expiration: `404 Not Found`
+
+**Security:**
+
+- ✅ Secret key in `.env` (NEVER commit to git!)
+- ✅ HMAC-SHA256 (cryptographically secure)
+- ✅ Timestamp in hex (obfuscation)
+- ✅ IP binding (optional, see source)
+- ✅ No database required (stateless)
+
+**Common Expiration Times:**
+
+```php
+// 1 hour (for temporary shares)
+thumbnail($path, 'large', signed: true, expiresIn: 3600)
+
+// 1 day (for daily content)
+thumbnail($path, 'large', signed: true, expiresIn: 86400)
+
+// 7 days (Facebook-style, default)
+thumbnail($path, 'large', signed: true, expiresIn: 604800)
+
+// 30 days (for long-term content)
+thumbnail($path, 'large', signed: true, expiresIn: 2592000)
+```
+
+**React/JavaScript:**
+
+Signed URLs work automatically with the JavaScript helper:
+
+```javascript
+import { getThumbnailUrl } from '@/utils/thumbnails';
+
+// Automatically uses PHP config (signed or not)
+const url = getThumbnailUrl(media.path, 'large');
+```
+
+**Generate Secret Key:**
+
+```bash
+# Use existing APP_KEY (recommended)
+THUMBNAILS_SIGN_SECRET="${APP_KEY}"
+
+# Or generate new dedicated key
+php artisan tinker
+>>> Str::random(64)
+"qR7x9Kp2Lm5Nv8Wz3Yt6Hs4Jf1Gd0Qa..." # Copy to .env
+```
+
+**Error Responses:**
+
+| Scenario | HTTP Status | Header |
+|----------|------------|--------|
+| Missing signature | 403 Forbidden | `X-Thumbnail-Error: missing-signature` |
+| Invalid signature | 403 Forbidden | `X-Thumbnail-Error: invalid-signature` |
+| Expired URL | 404 Not Found | `X-Thumbnail-Error: expired` |
+
+**When to use:**
+
+- ✅ Public sites with expensive bandwidth
+- ✅ Content with privacy/access control
+- ✅ Preventing image scraping/hotlinking
+- ✅ Temporary/time-limited shares
+- ❌ Private sites behind auth (not needed)
+- ❌ Low-traffic personal blogs (overkill)
+
+---
+
+```php
+// config/thumbnails.php
+'formats' => [
+    'auto_convert' => true,
     'priority' => ['avif', 'webp', 'jpg'], // Try AVIF first, fallback to WebP, then JPG
     'quality' => [
         'avif' => 75,

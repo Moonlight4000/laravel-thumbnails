@@ -36,6 +36,7 @@ use Moonlight\Thumbnails\Services\Strategies\DateBasedStrategy;
 use Moonlight\Thumbnails\Services\Strategies\HashLevelsStrategy;
 use Moonlight\Thumbnails\Services\SmartCropService;
 use Moonlight\Thumbnails\Services\DailyStatsService;
+use Moonlight\Thumbnails\Services\SignedUrlService;
 
 /**
  * ThumbnailService
@@ -181,6 +182,8 @@ class ThumbnailService
      * @param bool $returnUrl Return full URL instead of path
      * @param string|null $context Context name from config (e.g., "post", "gallery")
      * @param array $contextData Data for context placeholders (e.g., ['user_id' => 1, 'post_id' => 12])
+     * @param bool|null $signed Enable signed URLs (null = use config default)
+     * @param int|null $expiresIn Expiration in seconds (null = use config default)
      * @return string|null Thumbnail URL/path or null on error
      */
     public function thumbnail(
@@ -188,7 +191,9 @@ class ThumbnailService
         string $size = 'small', 
         bool $returnUrl = true,
         ?string $context = null,
-        array $contextData = []
+        array $contextData = [],
+        ?bool $signed = null,
+        ?int $expiresIn = null
     ): ?string
     {
         // CHECK IMAGE LIBRARIES (non-intrusive, logs critical issues only)
@@ -269,7 +274,18 @@ class ThumbnailService
         // 🔥 CACHE CHECK - if thumbnail exists, return it (CACHE HIT)
         // Laravel On-Demand Thumbnails © Moonlight Poland
         if (Storage::disk($disk)->exists($thumbnailPath)) {
-            return $returnUrl ? asset("storage/{$thumbnailPath}") : $thumbnailPath;
+            if ($returnUrl) {
+                // Check if signed URLs should be used
+                $useSigned = $signed ?? Config::get('thumbnails.signed_urls.enabled', false);
+                
+                if ($useSigned) {
+                    $signedUrlService = app(SignedUrlService::class);
+                    return $signedUrlService->generateSignedUrl($thumbnailPath, $expiresIn);
+                }
+                
+                return asset("storage/{$thumbnailPath}");
+            }
+            return $thumbnailPath;
         }
         
         // 🔨 CACHE MISS - generate thumbnail NOW (ON-DEMAND)
@@ -285,7 +301,19 @@ class ThumbnailService
                 $dimensions['height']
             );
             
-            return $returnUrl ? asset("storage/{$thumbnailPath}") : $thumbnailPath;
+            if ($returnUrl) {
+                // Check if signed URLs should be used
+                $useSigned = $signed ?? Config::get('thumbnails.signed_urls.enabled', false);
+                
+                if ($useSigned) {
+                    $signedUrlService = app(SignedUrlService::class);
+                    return $signedUrlService->generateSignedUrl($thumbnailPath, $expiresIn);
+                }
+                
+                return asset("storage/{$thumbnailPath}");
+            }
+            
+            return $thumbnailPath;
             
         } catch (\Exception $e) {
             // Log only to dedicated thumbnails.log
