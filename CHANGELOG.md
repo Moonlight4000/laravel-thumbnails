@@ -2,6 +2,83 @@
 
 All notable changes to `laravel-context-aware-thumbnails` will be documented in this file.
 
+## [3.0.0] - 2026-01-08
+
+### 🚀 Major Release - Laravel Native Signed URLs
+
+This is a **BREAKING CHANGE** for projects using signed URLs feature.
+
+### Changed (BREAKING)
+- **Signed URLs now use Laravel's native signing mechanism** instead of custom Facebook-style (`oh`/`oe` parameters)
+  - URLs now use standard `expires` and `signature` query parameters
+  - Better compatibility with Laravel ecosystem
+  - Simpler implementation, no custom middleware needed
+  - Timing-safe signature validation using `hash_hmac()` + `hash_equals()`
+
+### Removed (BREAKING)
+- **Removed `SignedUrlService`** - replaced by Laravel's native `URL::temporarySignedRoute()`
+- **Removed `ValidateSignedUrl` middleware** - replaced by validation in `StorageFileController`
+- **Facebook-style signing (`oh`/`oe` parameters)** - now uses Laravel standard (`expires`/`signature`)
+
+### Added
+- **Auto-registered `/storage/{path}` route** in `ThumbnailsServiceProvider`
+  - Named route: `storage.serve`
+  - Used by `URL::temporarySignedRoute()` in helpers and ThumbnailService
+  - Handles signed URL validation internally
+- **Enhanced `StorageFileController`**:
+  - Manual signature validation using `hash_hmac('sha256', url_with_expires, app_key)`
+  - Timing-safe comparison with `hash_equals()`
+  - Proper browser caching with `Cache-Control` and `Expires` headers
+  - 7-day default expiration (configurable via `THUMBNAILS_URL_EXPIRATION`)
+
+### Requirements
+- **Laravel 12+** officially supported (10+ still compatible)
+- PHP 8.1, 8.2, or 8.3
+
+### Migration Guide (v2.x → v3.0)
+
+If you're NOT using signed URLs (`THUMBNAILS_SIGNED_URLS=false`), **no changes needed**.
+
+If you ARE using signed URLs:
+
+1. **Update package**:
+```bash
+composer update moonlight-poland/laravel-context-aware-thumbnails
+```
+
+2. **Remove custom route** (if you added one):
+   - Package now auto-registers `/storage/{path}` route
+   - Remove any custom `storage.serve` routes from your `routes/web.php`
+
+3. **Clear cache**:
+```bash
+php artisan route:clear
+php artisan config:clear
+php artisan optimize:clear
+```
+
+4. **Regenerate all signed URLs**:
+   - Old URLs with `?oh=...&oe=...` will **no longer work**
+   - New URLs will use `?expires=...&signature=...`
+   - If you cached signed URLs, clear that cache
+   - If users bookmarked old URLs, they'll need to refresh
+
+5. **Test signed URLs**:
+```php
+// This now generates: /storage/path?expires=1234567890&signature=abc123...
+$url = thumbnail($post, 'image.jpg', 'large', true, 'post', ['user_id' => 1], signed: true);
+$originalUrl = original('photos/full.jpg', signed: true);
+```
+
+### Benefits of v3.0
+- ✅ Standard Laravel signing - better ecosystem compatibility
+- ✅ Simpler codebase - removed 300+ lines of custom code
+- ✅ More reliable - uses Laravel's proven signing mechanism
+- ✅ Better browser caching - 7-day cache with proper headers
+- ✅ Out-of-the-box Laravel 12 support
+
+---
+
 ## [2.0.1] - 2026-01-03
 
 ### Fixed

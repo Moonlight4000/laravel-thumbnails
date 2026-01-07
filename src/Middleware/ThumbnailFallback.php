@@ -60,7 +60,7 @@ class ThumbnailFallback
         }
         
         // Intercept 403/404 on thumbnail requests
-        if (($response->status() === 404 || $response->status() === 403) && 
+        if (($response->getStatusCode() === 404 || $response->getStatusCode() === 403) && 
             str_contains($request->path(), '/thumbnails/') &&
             str_contains($request->path(), 'storage/')) {
             
@@ -94,7 +94,7 @@ class ThumbnailFallback
                 
                 // Generate thumbnail on-demand!
                 try {
-                    // Generate thumbnail (returns URL or data URI for blocked)
+                    // Generate thumbnail and get its URL (signed or not)
                     $thumbnailUrl = $this->thumbnailService->thumbnail($originalPath, $size, true);
                     
                     // Check if it's a data URI (blocked image)
@@ -112,33 +112,17 @@ class ThumbnailFallback
                         }
                     }
                     
-                    // Extract path from URL
-                    $thumbnailPath = str_replace([asset('storage/'), '/storage/'], '', $thumbnailUrl);
-                    $thumbnailPath = ltrim($thumbnailPath, '/'); // Remove leading slash
+                    // Thumbnail generated successfully!
+                    // If signed URLs enabled: redirect to signed URL (with ?expires=...&signature=...)
+                    // If signed URLs disabled: redirect to regular asset URL
+                    // This allows browser to cache and makes signed URLs work for React/JS
+                    Log::info('ThumbnailFallback: Generated on-demand, redirecting', [
+                        'original' => $originalPath,
+                        'thumbnail' => $thumbnailUrl,
+                        'size' => $size
+                    ]);
                     
-                    // Verify thumbnail was generated
-                    if (!Storage::disk($disk)->exists($thumbnailPath)) {
-                        return $response;
-                    }
-                    
-                    // Get file contents
-                    $file = Storage::disk($disk)->get($thumbnailPath);
-                    
-                    // Determine MIME type
-                    $mimeType = match($extension) {
-                        'jpg', 'jpeg' => 'image/jpeg',
-                        'png' => 'image/png',
-                        'gif' => 'image/gif',
-                        'webp' => 'image/webp',
-                        default => 'image/jpeg'
-                    };
-                    
-                    $cacheControl = Config::get('thumbnails.cache_control', 'public, max-age=31536000');
-                    
-                    // Return generated thumbnail with caching
-                    return response($file)
-                        ->header('Content-Type', $mimeType)
-                        ->header('Cache-Control', $cacheControl)
+                    return redirect($thumbnailUrl, 302)
                         ->header('X-Thumbnail-Generated', 'on-demand')
                         ->header('X-Thumbnail-Size', $size);
                         

@@ -36,7 +36,6 @@ use Moonlight\Thumbnails\Services\Strategies\DateBasedStrategy;
 use Moonlight\Thumbnails\Services\Strategies\HashLevelsStrategy;
 use Moonlight\Thumbnails\Services\SmartCropService;
 use Moonlight\Thumbnails\Services\DailyStatsService;
-use Moonlight\Thumbnails\Services\SignedUrlService;
 
 /**
  * ThumbnailService
@@ -279,8 +278,14 @@ class ThumbnailService
                 $useSigned = $signed ?? Config::get('thumbnails.signed_urls.enabled', false);
                 
                 if ($useSigned) {
-                    $signedUrlService = app(SignedUrlService::class);
-                    return $signedUrlService->generateSignedUrl($thumbnailPath, $expiresIn);
+                    $expiresIn = (int) ($expiresIn ?? Config::get('thumbnails.signed_urls.expiration', 604800));
+                    $expiration = now()->addSeconds($expiresIn);
+                    
+                    return \Illuminate\Support\Facades\URL::temporarySignedRoute(
+                        'storage.serve',
+                        $expiration,
+                        ['path' => $thumbnailPath]
+                    );
                 }
                 
                 return asset("storage/{$thumbnailPath}");
@@ -306,8 +311,14 @@ class ThumbnailService
                 $useSigned = $signed ?? Config::get('thumbnails.signed_urls.enabled', false);
                 
                 if ($useSigned) {
-                    $signedUrlService = app(SignedUrlService::class);
-                    return $signedUrlService->generateSignedUrl($thumbnailPath, $expiresIn);
+                    $expiresIn = (int) ($expiresIn ?? Config::get('thumbnails.signed_urls.expiration', 604800));
+                    $expiration = now()->addSeconds($expiresIn);
+                    
+                    return \Illuminate\Support\Facades\URL::temporarySignedRoute(
+                        'storage.serve',
+                        $expiration,
+                        ['path' => $thumbnailPath]
+                    );
                 }
                 
                 return asset("storage/{$thumbnailPath}");

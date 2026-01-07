@@ -86,15 +86,19 @@ if (!function_exists('original')) {
         ?int $expiresIn = null
     ): string
     {
-        $disk = config('thumbnails.disk', 'public');
-        
         // Determine if we should sign this URL
         $shouldSign = $signed ?? config('thumbnails.signed_urls.sign_originals', false);
         
         if ($shouldSign) {
-            /** @var \Moonlight\Thumbnails\Services\SignedUrlService $signedUrlService */
-            $signedUrlService = app('Moonlight\Thumbnails\Services\SignedUrlService');
-            return $signedUrlService->generateSignedUrl($imagePath, $expiresIn);
+            // Use Laravel's native temporarySignedRoute()
+            $expiresIn = (int) ($expiresIn ?? config('thumbnails.signed_urls.expiration', 604800));
+            $expiration = now()->addSeconds($expiresIn);
+            
+            return \Illuminate\Support\Facades\URL::temporarySignedRoute(
+                'storage.serve',
+                $expiration,
+                ['path' => $imagePath]
+            );
         }
         
         return asset("storage/{$imagePath}");

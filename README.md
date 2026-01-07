@@ -22,7 +22,6 @@ Generate image thumbnails on-the-fly in Laravel with **Context-Aware Thumbnails�
 4. **🤖 Smart Crop with AI Energy Detection** - Automatically focuses on important image areas
 5. **🚀 AVIF/WebP Support** - Modern formats for 50%+ smaller file sizes
 6. **🔒 Commercial Licensing** - Professional support & tamper detection included
-7. **Signed URLs (Facebook-style)** - Time-limited, cryptographically signed protection
 
 ---
 
@@ -885,144 +884,205 @@ Automatically convert thumbnails to modern formats for **50% smaller file sizes*
 
 ---
 
-### 🔐 Signed URLs (Facebook-style Protection)
+### 🔐 Laravel Native Signed URLs Integration
 
-Protect your images with expiring signed URLs - just like Facebook!
+**Version 2.0.18+** uses Laravel's native `URL::temporarySignedRoute()` for signed URLs instead of custom Facebook-style implementation.
 
-**Why use Signed URLs?**
-- 🚫 **Prevent hotlinking** - Other sites can't steal your bandwidth
-- ⏰ **Time-limited access** - Links expire after set time (e.g., 7 days)
-- 🔒 **Security** - Cryptographic signatures prevent tampering
-- 📊 **Control** - Track and manage image access
+### ⚙️ Required Setup (4 steps)
 
-**Configuration:**
+#### 1️⃣ **Create StorageController**
 
-```bash
-# .env
-THUMBNAILS_SIGNED_URLS=true                    # Enable for thumbnails
-THUMBNAILS_SIGNED_ORIGINALS=true               # Also sign original images
-THUMBNAILS_SIGN_SECRET="${APP_KEY}"            # Secret key (use APP_KEY)
-THUMBNAILS_URL_EXPIRATION=604800               # 7 days (like Facebook)
-```
-
-**Usage - Global (ENV):**
-
-```blade
-{{-- Uses global config from .env --}}
-<img src="{{ thumbnail($post->image, 'large') }}">
-{{-- Result: /storage/image.jpg?oh=abc123&oe=695F93A7&_t=ef45cd89 --}}
-```
-
-**Usage - Per Image (Override):**
-
-```blade
-{{-- Force signed URL (even if globally disabled) --}}
-<img src="{{ thumbnail($post->image, 'large', signed: true) }}">
-
-{{-- Disable signed URL (even if globally enabled) --}}
-<img src="{{ thumbnail($post->image, 'large', signed: false) }}">
-
-{{-- Custom expiration (1 hour instead of default) --}}
-<img src="{{ thumbnail($post->image, 'large', signed: true, expiresIn: 3600) }}">
-```
-
-**Usage - Original Images:**
-
-```blade
-{{-- Original (full-size) image with signed URL --}}
-<img src="{{ original($post->image) }}">
-{{-- Uses THUMBNAILS_SIGNED_ORIGINALS from config --}}
-
-{{-- Force signed for original --}}
-<img src="{{ original($post->image, signed: true) }}">
-
-{{-- Custom expiration for original --}}
-<img src="{{ original($post->image, signed: true, expiresIn: 86400) }}">
-```
-
-**How it works:**
-
-1. **URL Generation:**
-   - Package generates HMAC-SHA256 signature from: `path + expiration + secret`
-   - Appends parameters: `?oh=signature&oe=expiration_hex`
-   - Example: `/storage/image.jpg?oh=abc123&oe=695F93A7`
-
-2. **URL Validation (Middleware):**
-   - User requests signed URL
-   - Middleware intercepts request
-   - Checks: Is signature valid? Is URL expired?
-   - If valid → serves image
-   - If invalid/expired → returns 403/404
-
-3. **URL Expiration:**
-   - Links stop working after expiration time
-   - Default: 7 days (like Facebook)
-   - Customizable per image or globally
-   - After expiration: `404 Not Found`
-
-**Security:**
-
-- ✅ Secret key in `.env` (NEVER commit to git!)
-- ✅ HMAC-SHA256 (cryptographically secure)
-- ✅ Timestamp in hex (obfuscation)
-- ✅ IP binding (optional, see source)
-- ✅ No database required (stateless)
-
-**Common Expiration Times:**
+Create `app/Http/Controllers/StorageController.php`:
 
 ```php
-// 1 hour (for temporary shares)
-thumbnail($path, 'large', signed: true, expiresIn: 3600)
+<?php
 
-// 1 day (for daily content)
-thumbnail($path, 'large', signed: true, expiresIn: 86400)
+namespace App\Http\Controllers;
 
-// 7 days (Facebook-style, default)
-thumbnail($path, 'large', signed: true, expiresIn: 604800)
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
-// 30 days (for long-term content)
-thumbnail($path, 'large', signed: true, expiresIn: 2592000)
+class StorageController extends Controller
+{
+    /**
+     * Serve files from storage with signed URL validation
+     * 
+     * Automatically routes audio files to AudioStreamController for
+     * HTTP Range Request support (seeking in audio players).
+     */
+    public function serve(Request $request, string $path)
+    {
+        $path = urldecode($path);
+        
+        // Optional: Delegate audio files to AudioStreamController
+        // if (preg_match('/\.(mp3|wav|ogg|m4a|flac)$/i', $path)) {
+        //     return app(AudioStreamController::class)->stream($request, $path);
+        // }
+        
+        $disk = config('thumbnails.disk', 'public');
+        $fullPath = Storage::disk($disk)->path($path);
+        
+        if (!file_exists($fullPath)) {
+            abort(404, 'File not found');
+        }
+        
+        // Set cache headers based on signed URLs config
+        $cacheControl = config('thumbnails.signed_urls.enabled')
+            ? 'private, no-cache, must-revalidate'
+            : 'public, max-age=31536000';
+        
+        return response()->file($fullPath, [
+            'Cache-Control' => $cacheControl,
+            'Content-Type' => mime_content_type($fullPath) ?: 'application/octet-stream',
+        ]);
+    }
+}
 ```
 
-**React/JavaScript:**
+#### 2️⃣ **Add Route with Signed Middleware**
 
-Signed URLs work automatically with the JavaScript helper:
+Add to `routes/web.php`:
 
-```javascript
-import { getThumbnailUrl } from '@/utils/thumbnails';
+```php
+use App\Http\Controllers\StorageController;
 
-// Automatically uses PHP config (signed or not)
-const url = getThumbnailUrl(media.path, 'large');
+Route::get('/storage/{path}', [StorageController::class, 'serve'])
+    ->where('path', '.*')
+    ->middleware('signed')  // Laravel's native signed middleware
+    ->name('storage.serve');
 ```
 
-**Generate Secret Key:**
+**⚠️ IMPORTANT:** Place this route **BEFORE** any catch-all routes!
+
+#### 3️⃣ **Disable Laravel's Auto-Routes**
+
+In `config/filesystems.php`, set `serve => false`:
+
+```php
+'public' => [
+    'driver' => 'local',
+    'root' => storage_path('app/public'),
+    'url' => env('APP_URL').'/storage',
+    'visibility' => 'public',
+    'serve' => false,  // ✅ Disable auto-registration
+],
+
+'local' => [
+    'driver' => 'local',
+    'root' => storage_path('app/private'),
+    'serve' => false,  // ✅ Also disable for local
+],
+```
+
+#### 4️⃣ **Remove public/storage Symlink**
+
+Laravel should route ALL `/storage/*` requests through the controller:
 
 ```bash
-# Use existing APP_KEY (recommended)
-THUMBNAILS_SIGN_SECRET="${APP_KEY}"
+# Linux/Mac
+rm public/storage
 
-# Or generate new dedicated key
-php artisan tinker
->>> Str::random(64)
-"qR7x9Kp2Lm5Nv8Wz3Yt6Hs4Jf1Gd0Qa..." # Copy to .env
+# Windows PowerShell
+Remove-Item public/storage
+
+# Or manually delete the folder/symlink
 ```
 
-**Error Responses:**
+**Why remove it?**
+- Symlink causes Apache/Nginx to serve files **statically** (bypassing Laravel)
+- Static serving = NO middleware = NO signed URL validation
+- Your images would load even with expired URLs! ❌
 
-| Scenario | HTTP Status | Header |
-|----------|------------|--------|
-| Missing signature | 403 Forbidden | `X-Thumbnail-Error: missing-signature` |
-| Invalid signature | 403 Forbidden | `X-Thumbnail-Error: invalid-signature` |
-| Expired URL | 404 Not Found | `X-Thumbnail-Error: expired` |
+---
 
-**When to use:**
+### 🎯 Enable Signed URLs
 
-- ✅ Public sites with expensive bandwidth
-- ✅ Content with privacy/access control
-- ✅ Preventing image scraping/hotlinking
-- ✅ Temporary/time-limited shares
-- ❌ Private sites behind auth (not needed)
-- ❌ Low-traffic personal blogs (overkill)
+**In `.env`:**
+
+```bash
+THUMBNAILS_SIGNED_URLS=true                    # Enable for thumbnails
+THUMBNAILS_SIGNED_ORIGINALS=true               # Also sign original images
+THUMBNAILS_URL_EXPIRATION=7200                 # 2 hours (or 604800 for 7 days)
+```
+
+**Generated URLs:**
+
+```blade
+{{-- Before (no signed URLs) --}}
+<img src="/storage/user-posts/1/14/img.jpg">
+
+{{-- After (with signed URLs) --}}
+<img src="/storage/user-posts/1/14/img.jpg?expires=1767553796&signature=abc123...">
+```
+
+---
+
+### ✨ How It Works
+
+1. **`original()` / `thumbnail()` helpers** generate signed URL using `URL::temporarySignedRoute()`
+2. **Browser requests** the signed URL
+3. **`signed` middleware** validates `expires` and `signature` parameters
+4. **If valid:** `StorageController` serves the file
+5. **If invalid/expired:** Laravel returns `403 Invalid signature`
+
+**ThumbnailFallback Middleware:**
+- When thumbnail doesn't exist (404), middleware generates it on-demand
+- Returns `302 redirect` to **signed URL** (if enabled)
+- Browser makes new request with signed URL → validated by `signed` middleware
+- Works perfectly with React/Vue/JavaScript!
+
+---
+
+### 📊 URL Expiration Times
+
+```bash
+# 5 minutes (for one-time shares)
+THUMBNAILS_URL_EXPIRATION=300
+
+# 1 hour (for temporary content)
+THUMBNAILS_URL_EXPIRATION=3600
+
+# 2 hours (recommended for SPA apps)
+THUMBNAILS_URL_EXPIRATION=7200
+
+# 7 days (Facebook-style)
+THUMBNAILS_URL_EXPIRATION=604800
+
+# 30 days (for long-term content)
+THUMBNAILS_URL_EXPIRATION=2592000
+```
+
+---
+
+### 🔒 Security Benefits
+
+- ✅ **Prevents hotlinking** - Other sites can't steal your bandwidth
+- ✅ **Time-limited access** - Links expire after set time
+- ✅ **No database required** - Stateless validation
+- ✅ **Laravel native** - Uses built-in `URL::temporarySignedRoute()`
+- ✅ **Cryptographically secure** - HMAC-SHA256 signatures
+
+---
+
+### 🐛 Troubleshooting
+
+**Images still load after expiration?**
+- ✅ Check if `public/storage` symlink exists (delete it!)
+- ✅ Verify `serve => false` in `config/filesystems.php`
+- ✅ Clear cache: `php artisan optimize:clear`
+
+**403 Invalid signature on valid URLs?**
+- ✅ Check if route is named `storage.serve`
+- ✅ Verify `signed` middleware is applied
+- ✅ Ensure route is placed BEFORE catch-all routes
+
+**React/Vue images not loading?**
+- ✅ Backend must return `thumbnail` URL (not just `path`)
+- ✅ Example:
+  ```php
+  'thumbnail' => thumbnail($path, 'large', true),  // ✅ Returns signed URL
+  'thumbnail_small' => thumbnail($path, 'small', true),
+  ```
 
 ---
 

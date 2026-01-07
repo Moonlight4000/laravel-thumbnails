@@ -17,10 +17,10 @@ namespace Moonlight\Thumbnails;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Route;
 use Moonlight\Thumbnails\Services\ThumbnailService;
-use Moonlight\Thumbnails\Services\SignedUrlService;
 use Moonlight\Thumbnails\Middleware\ThumbnailFallback;
-use Moonlight\Thumbnails\Middleware\ValidateSignedUrl;
+use Moonlight\Thumbnails\Controllers\StorageFileController;
 use Moonlight\Thumbnails\Commands\ThumbnailGenerateCommand;
 use Moonlight\Thumbnails\Commands\ThumbnailClearCommand;
 use Moonlight\Thumbnails\Commands\ThumbnailSyncJsCommand;
@@ -47,11 +47,6 @@ class ThumbnailsServiceProvider extends ServiceProvider
         // Register ThumbnailService as singleton
         $this->app->singleton(ThumbnailService::class, function ($app) {
             return new ThumbnailService();
-        });
-        
-        // Register SignedUrlService as singleton
-        $this->app->singleton(SignedUrlService::class, function ($app) {
-            return new SignedUrlService();
         });
         
         // Register Facade alias
@@ -88,11 +83,23 @@ class ThumbnailsServiceProvider extends ServiceProvider
                 ->pushMiddleware(ThumbnailFallback::class);
         }
         
-        // Register signed URL validation middleware (if enabled)
-        if (config('thumbnails.signed_urls.enabled', false)) {
-            $this->app[\Illuminate\Contracts\Http\Kernel::class]
-                ->pushMiddleware(ValidateSignedUrl::class);
-        }
+        // Register storage route for signed URL serving
+        // This route is used by Laravel's native URL::temporarySignedRoute()
+        // called from helpers.php original() and ThumbnailService thumbnail()
+        $this->registerStorageRoute();
+    }
+    
+    /**
+     * Register /storage/{path} route for serving files with signed URL validation
+     * 
+     * This route is required for Laravel's native signed URLs to work.
+     * It uses StorageFileController which validates signatures using hash_hmac.
+     */
+    protected function registerStorageRoute(): void
+    {
+        Route::get('/storage/{path}', [StorageFileController::class, 'serve'])
+            ->where('path', '.*')
+            ->name('storage.serve');
     }
 }
 
