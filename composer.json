@@ -1,6 +1,6 @@
 {
     "name": "moonlight-poland/laravel-context-aware-thumbnails",
-    "version": "3.0.0",
+    "version": "3.1.0",
     "description": "Context-Aware on-demand thumbnail generation for Laravel with intelligent path organization, Smart Crop, AVIF/WebP support, Laravel Native Signed URLs, and variants system. Automatically organize thumbnails by user/post/album. Zero config, blazing fast! Laravel 12+ ready.",
     "keywords": [
         "laravel",
