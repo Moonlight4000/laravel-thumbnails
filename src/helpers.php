@@ -93,35 +93,37 @@ if (!function_exists('original')) {
         // Determine if we should sign this URL
         $shouldSign = $signed ?? config('thumbnails.signed_urls.sign_originals', false);
         
-        if ($shouldSign && $context) {
-            // Use context-aware signed URL (same as thumbnail() system)
+        if ($shouldSign) {
             $expiresIn = (int) ($expiresIn ?? config('thumbnails.signed_urls.expiration', 604800));
             $expiration = now()->addSeconds($expiresIn);
             
-            // Build context-aware path using context template
-            $contextTemplate = config("thumbnails.contexts.{$context}");
-            
-            if ($contextTemplate) {
-                // Replace placeholders in context template
-                $contextPath = $contextTemplate;
-                foreach ($contextData as $key => $value) {
-                    $contextPath = str_replace("{{$key}}", $value, $contextPath);
+            // If context is provided, use context-aware path
+            if ($context) {
+                // Build context-aware path using context template
+                $contextTemplate = config("thumbnails.contexts.{$context}");
+                
+                if ($contextTemplate) {
+                    // Replace placeholders in context template
+                    $contextPath = $contextTemplate;
+                    foreach ($contextData as $key => $value) {
+                        $contextPath = str_replace("{{$key}}", $value, $contextPath);
+                    }
+                    
+                    // Extract filename from imagePath
+                    $filename = basename($imagePath);
+                    
+                    // Build full path: context_path/filename
+                    $fullPath = trim($contextPath, '/') . '/' . $filename;
+                    
+                    return \Illuminate\Support\Facades\URL::temporarySignedRoute(
+                        'storage.serve',
+                        $expiration,
+                        ['path' => $fullPath]
+                    );
                 }
-                
-                // Extract filename from imagePath
-                $filename = basename($imagePath);
-                
-                // Build full path: context_path/filename
-                $fullPath = trim($contextPath, '/') . '/' . $filename;
-                
-                return \Illuminate\Support\Facades\URL::temporarySignedRoute(
-                    'storage.serve',
-                    $expiration,
-                    ['path' => $fullPath]
-                );
             }
             
-            // Fallback: use plain path if context not found
+            // No context OR context not found - use plain path with signing
             return \Illuminate\Support\Facades\URL::temporarySignedRoute(
                 'storage.serve',
                 $expiration,
